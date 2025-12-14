@@ -13,5 +13,6 @@ export default withMDX()({
   images: {
     contentDispositionType: 'inline',
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    domains: ['images.unsplash.com'],
   },
 } satisfies NextConfig)

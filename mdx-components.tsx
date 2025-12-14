@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { codeToHtml, createCssVariablesTheme } from 'shiki'
 import Link from 'next/link'
 import Image from 'next/image'
+import Gallery from '@/components/gallery'
 
 // @ts-ignore
 import { InlineMath, BlockMath } from 'react-katex'
@@ -50,7 +51,7 @@ export const components: Record<
   a: ({ href, ...props }) => {
     return (
       <Link
-        className='break-words decoration-from-font underline underline-offset-2 decoration-rurikon-300 hover:decoration-rurikon-600 focus-visible:outline focus-visible:outline-rurikon-400
+        className='wrap-break-word decoration-from-font underline underline-offset-2 decoration-rurikon-300 hover:decoration-rurikon-600 focus-visible:outline focus-visible:outline-rurikon-400
         focus-visible:rounded-xs 
         focus-visible:outline-offset-1
         focus-visible:outline-dotted'
@@ -154,6 +155,7 @@ export const components: Record<
   BlockSideTitle,
   InlineMath,
   BlockMath,
+  Gallery,
 }
 
 export function useMDXComponents(inherited: MDXComponents): MDXComponents {

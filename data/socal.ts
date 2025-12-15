@@ -1,6 +1,6 @@
 import { GalleryImage } from '@/types/gallery';
 
-export const galleryImages: GalleryImage[] = [
+export const SoCalImages: GalleryImage[] = [
   {
     id: '1',
     src: 'https://images.unsplash.com/photo-1675789203977-70070dae0799?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=870&q=80',

@@ -24,7 +24,7 @@ export default async function Page(props: {
 
 export async function generateStaticParams() {
   const articles = await fs.readdir(
-    path.join(process.cwd(), 'app', 'chapter', '_articles')
+    path.join(process.cwd(), 'app', 'episodes', '_articles')
   )
 
   return articles

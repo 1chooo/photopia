@@ -59,7 +59,7 @@ export default function Gallery({ images, layout = defaultLayout }: GalleryProps
   ).flat();
 
   return (
-    <section className="text-neutral-700">
+    <section>
       <div className="container w-full">
         <div className="flex flex-wrap w-full">
           {extendedColumns.map(({ column, key }) => {

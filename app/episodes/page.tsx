@@ -3,14 +3,14 @@ import Link from 'next/link'
 import path from 'path'
 
 export const metadata = {
-  title: 'Chapter',
+  title: 'Episodes',
 }
 
 // In the future we can have a pagination here e.g. /1/*.mdx
 const articlesDirectory = path.join(
   process.cwd(),
   'app',
-  'chapter',
+  'episodes',
   '_articles'
 )
 
@@ -39,7 +39,7 @@ export default async function Page() {
         {items.map((item) => (
           <li key={item.slug} className='font-medium'>
             <Link
-              href={`/chapter/${item.slug}`}
+              href={`/episodes/${item.slug}`}
               className='group flex gap-1 -mx-2 px-2 justify-between items-center focus-visible:outline focus-visible:outline-rurikon-400 focus-visible:rounded-xs focus-visible:outline-dotted focus-visible:text-rurikon-600'
               draggable={false}
             >

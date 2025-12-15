@@ -19,7 +19,7 @@ export default withMDX()({
         hostname: 'images.unsplash.com',
         port: '',
         pathname: '/**',
-      }
+      },
     ]
   },
 } satisfies NextConfig)

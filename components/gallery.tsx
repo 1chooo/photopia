@@ -2,6 +2,7 @@
 
 import { BlurFade } from '@/components/magicui/blur-fade';
 import { GalleryImage, GalleryLayout } from '@/types/gallery';
+import { getBlurDataURL } from '@/lib/blur-placeholder';
 import Image from 'next/image';
 import { useMemo, useState, useEffect } from 'react';
 
@@ -16,6 +17,8 @@ interface GalleryItemProps {
 }
 
 function GalleryItem({ image, index }: GalleryItemProps) {
+  const [isLoaded, setIsLoaded] = useState(false);
+  
   // Use actual image dimensions if available, otherwise default to landscape
   const width = image.width || 800;
   const height = image.height || 600;
@@ -23,12 +26,18 @@ function GalleryItem({ image, index }: GalleryItemProps) {
   return (
     <BlurFade delay={0.25 + index * 0.05} inView>
       <Image
-        className="mb-4 w-full object-contain transition duration-500 hover:scale-[1.02]"
+        className={`mb-4 w-full object-contain transition-all duration-700 hover:scale-105 ${
+          isLoaded ? 'opacity-100' : 'opacity-0'
+        }`}
         src={image.src}
         alt={image.alt}
         loading="lazy"
         width={width}
         height={height}
+        quality={80}
+        placeholder="blur"
+        blurDataURL={getBlurDataURL(width, height)}
+        onLoad={() => setIsLoaded(true)}
       />
     </BlurFade>
   );

@@ -1,5 +1,9 @@
+'use client';
+
 import Image from 'next/image';
 import { GalleryImage } from '@/types/gallery';
+import { getBlurDataURL } from '@/lib/blur-placeholder';
+import { useState } from 'react';
 import cn from 'clsx';
 
 interface PhotoProps {
@@ -9,6 +13,8 @@ interface PhotoProps {
 }
 
 export default function Photo({ image, title, variant = 'original' }: PhotoProps) {
+  const [isLoaded, setIsLoaded] = useState(false);
+  
   if (!image) {
     return null;
   }
@@ -25,10 +31,15 @@ export default function Photo({ image, title, variant = 'original' }: PhotoProps
                     <div className="block h-full w-full relative aspect-square">
                       <Image
                         alt={image.alt}
-                        className="object-cover object-center transition duration-500 transform scale-100 hover:scale-110"
+                        className={`object-cover object-center transition-all duration-700 transform scale-100 hover:scale-110 ${
+                          isLoaded ? 'opacity-100' : 'opacity-0'
+                        }`}
                         src={image.src}
                         fill
                         sizes="100vw"
+                        placeholder="blur"
+                        blurDataURL={getBlurDataURL(800, 800)}
+                        onLoad={() => setIsLoaded(true)}
                       />
                     </div>
                   </div>
@@ -37,11 +48,16 @@ export default function Photo({ image, title, variant = 'original' }: PhotoProps
                     <div className="block w-full relative">
                       <Image
                         alt={image.alt}
-                        className="object-contain object-center w-full h-auto"
+                        className={`object-contain object-center w-full h-auto transition-opacity duration-700 ${
+                          isLoaded ? 'opacity-100' : 'opacity-0'
+                        }`}
                         src={image.src}
                         width={image.width || 1200}
                         height={image.height || 800}
                         sizes="100vw"
+                        placeholder="blur"
+                        blurDataURL={getBlurDataURL(image.width || 1200, image.height || 800)}
+                        onLoad={() => setIsLoaded(true)}
                       />
                     </div>
                   </div>

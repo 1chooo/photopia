@@ -1,4 +1,7 @@
+'use client';
+
 import Image from 'next/image';
+import { useState } from 'react';
 import { GalleryImage, GalleryLayout } from '@/types/gallery';
 
 interface GalleryProps {
@@ -11,15 +14,37 @@ interface GalleryItemProps {
 }
 
 function GalleryItem({ image }: GalleryItemProps) {
+  const [aspectRatio, setAspectRatio] = useState<string>('aspect-square');
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // If width and height are provided, calculate aspect ratio
+  if (image.width && image.height && !isLoaded) {
+    const isPortrait = image.height > image.width;
+    const ratio = isPortrait ? 'aspect-[2/3]' : 'aspect-[3/2]';
+    if (aspectRatio !== ratio) {
+      setAspectRatio(ratio);
+      setIsLoaded(true);
+    }
+  }
+
+  const handleLoadingComplete = (img: HTMLImageElement) => {
+    // Determine orientation from the loaded image
+    const isPortrait = img.naturalHeight > img.naturalWidth;
+    const ratio = isPortrait ? 'aspect-[2/3]' : 'aspect-[3/2]';
+    setAspectRatio(ratio);
+    setIsLoaded(true);
+  };
+  
   return (
     <div className="overflow-hidden h-full w-full">
-      <div className="block h-full w-full relative aspect-square">
+      <div className={`block h-full w-full relative ${aspectRatio} transition-all duration-300`}>
         <Image
           alt={image.alt}
-          className="object-cover object-center transition duration-500 transform scale-100 hover:scale-110"
+          className="object-cover object-center transition duration-500 transform hover:scale-105"
           src={image.src}
           fill
           sizes="(max-width: 768px) 100vw, 50vw"
+          onLoad={(e) => handleLoadingComplete(e.currentTarget)}
         />
       </div>
     </div>
@@ -31,10 +56,10 @@ const defaultLayout: GalleryLayout = {
   columns: [
     [{ size: 'half' }, { size: 'half' }, { size: 'full' }],
     [{ size: 'full' }, { size: 'half' }, { size: 'half' }, { size: 'half' }, { size: 'half' }],
-    [{ size: 'full' }, { size: 'half' }, { size: 'half' }, { size: 'half' }, { size: 'half' }],
-    [{ size: 'half' }, { size: 'half' }, { size: 'full' }],
-    [{ size: 'full' }, { size: 'half' }, { size: 'half' }],
-    [{ size: 'half' }, { size: 'half' }, { size: 'half' }, { size: 'half' }, { size: 'full' }],
+    // [{ size: 'full' }, { size: 'half' }, { size: 'half' }, { size: 'half' }, { size: 'half' }],
+    // [{ size: 'half' }, { size: 'half' }, { size: 'full' }],
+    // [{ size: 'full' }, { size: 'half' }, { size: 'half' }],
+    // [{ size: 'half' }, { size: 'half' }, { size: 'half' }, { size: 'half' }, { size: 'full' }],
     [{ size: 'half' }, { size: 'half' }, { size: 'half' }, { size: 'half' }, { size: 'full' }],
     [{ size: 'full' }, { size: 'half' }, { size: 'half' }],
   ],

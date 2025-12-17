@@ -16,9 +16,11 @@ interface GalleryPhotosProps {
 async function getPhotos(slug: string): Promise<PhotoData[]> {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const isDev = process.env.NODE_ENV === 'development';
+    
     const response = await fetch(`${baseUrl}/api/photos?slug=${slug}`, {
       next: { 
-        revalidate: 3600, // Cache for 1 hour, revalidate after
+        revalidate: isDev ? 0 : 3600, // No cache in dev, 1 hour in production
         tags: [`gallery-${slug}`] // Tag for on-demand revalidation
       },
     });

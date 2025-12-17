@@ -168,30 +168,28 @@ export default function PhotosManagement() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8 flex items-center justify-center">
-        <div className="text-red-600">Failed to load galleries. Please try again.</div>
-      </div>
+      <div className="mt-7 text-rurikon-600">Failed to load galleries. Please try again.</div>
     );
   }
 
   return (
     <div>
-      <div className="mx-auto">
-        <h1 className="text-3xl font-bold mb-8 text-gray-900">Photo Management</h1>
+      <div>
+        <h1 className="font-semibold mb-7 text-rurikon-600">Photo Management</h1>
 
         {isLoading && (
-          <div className="bg-white rounded-lg shadow p-6 mb-8 text-center">
-            <p className="text-gray-600">Loading galleries...</p>
+          <div className="mt-7 bg-white rounded-lg border border-rurikon-100 p-6 text-center">
+            <p className="text-rurikon-600">Loading galleries...</p>
           </div>
         )}
 
         {/* Add Photo Form */}
-        <div className="bg-white rounded-lg shadow p-6 mb-8">
-          <h2 className="text-xl font-semibold mb-4 text-gray-800">Add Photo</h2>
+        <div className="mt-7 bg-white rounded-lg border border-rurikon-100 p-6">
+          <h2 className="font-semibold mb-7 text-rurikon-600">Add Photo</h2>
           <form onSubmit={handleAddPhoto} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm text-rurikon-600 mb-2 lowercase">
                   Select Existing Slug
                 </label>
                 <select
@@ -200,7 +198,7 @@ export default function PhotosManagement() {
                     setSelectedSlug(e.target.value);
                     setNewSlug('');
                   }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                  className="w-full px-3 py-2 border border-rurikon-200 rounded-md focus:ring-2 focus:ring-rurikon-400 focus:border-rurikon-400 text-rurikon-600"
                 >
                   <option value="">-- Select Slug --</option>
                   {galleries.map(gallery => (
@@ -212,7 +210,7 @@ export default function PhotosManagement() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm text-rurikon-600 mb-2 lowercase">
                   Or Enter New Slug
                 </label>
                 <input
@@ -223,13 +221,13 @@ export default function PhotosManagement() {
                     if (e.target.value) setSelectedSlug('');
                   }}
                   placeholder="e.g.: dtla, jioufen"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                  className="w-full px-3 py-2 border border-rurikon-200 rounded-md focus:ring-2 focus:ring-rurikon-400 focus:border-rurikon-400 text-rurikon-600"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm text-rurikon-600 mb-2 lowercase">
                 Photo URL
               </label>
               <input
@@ -238,12 +236,12 @@ export default function PhotosManagement() {
                 onChange={(e) => setNewPhotoUrl(e.target.value)}
                 placeholder="https://example.com/photo.jpg"
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                className="w-full px-3 py-2 border border-rurikon-200 rounded-md focus:ring-2 focus:ring-rurikon-400 focus:border-rurikon-400 text-rurikon-600"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm text-rurikon-600 mb-2 lowercase">
                 Alt Text (Optional)
               </label>
               <input
@@ -251,18 +249,18 @@ export default function PhotosManagement() {
                 value={newPhotoAlt}
                 onChange={(e) => setNewPhotoAlt(e.target.value)}
                 placeholder="Describe the photo for accessibility"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                className="w-full px-3 py-2 border border-rurikon-200 rounded-md focus:ring-2 focus:ring-rurikon-400 focus:border-rurikon-400 text-rurikon-600"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm text-rurikon-600 mb-2 lowercase">
                 Variant
               </label>
               <select
                 value={newPhotoVariant}
                 onChange={(e) => setNewPhotoVariant(e.target.value as 'original' | 'square')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                className="w-full px-3 py-2 border border-rurikon-200 rounded-md focus:ring-2 focus:ring-rurikon-400 focus:border-rurikon-400 text-rurikon-600"
               >
                 <option value="original">Original (Default)</option>
                 <option value="square">Square</option>
@@ -272,7 +270,7 @@ export default function PhotosManagement() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+              className="w-full bg-rurikon-600 text-white py-2 px-4 rounded-md hover:bg-rurikon-700 disabled:bg-rurikon-200 disabled:cursor-not-allowed transition-colors lowercase"
             >
               {loading ? 'Uploading...' : 'Add Photo'}
             </button>
@@ -280,22 +278,22 @@ export default function PhotosManagement() {
         </div>
 
         {/* Gallery List */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4 text-gray-800">Gallery List</h2>
+        <div className="mt-7 bg-white rounded-lg border border-rurikon-100 p-6">
+          <h2 className="font-semibold mb-7 text-rurikon-600">Gallery List</h2>
           
           <div className="space-y-2 mb-6">
             {galleries.map(gallery => (
               <button
                 key={gallery.slug}
                 onClick={() => setSelectedSlug(gallery.slug)}
-                className={`w-full text-left px-4 py-3 rounded-md transition-colors ${
+                className={`w-full text-left px-4 py-3 rounded-md transition-colors lowercase ${
                   selectedSlug === gallery.slug
-                    ? 'bg-blue-100 text-blue-900 border-2 border-blue-500'
-                    : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border-2 border-transparent'
+                    ? 'bg-rurikon-50 text-rurikon-600 border-2 border-rurikon-300'
+                    : 'bg-white text-rurikon-600 hover:bg-rurikon-50 border-2 border-rurikon-100'
                 }`}
               >
-                <span className="font-medium">{gallery.slug}</span>
-                <span className="ml-2 text-sm text-gray-500">
+                <span className="font-semibold">{gallery.slug}</span>
+                <span className="ml-2 text-sm text-rurikon-400">
                   ({gallery.photos.length} photos)
                 </span>
               </button>
@@ -305,15 +303,15 @@ export default function PhotosManagement() {
           {/* Photos Display */}
           {currentGallery && (
             <div>
-              <h3 className="text-lg font-semibold mb-4 text-gray-800">
+              <h3 className="font-semibold mb-7 text-rurikon-600 lowercase">
                 {currentGallery.slug}'s Photos
-                <span className="text-sm text-gray-500 ml-2">
+                <span className="text-sm text-rurikon-400 ml-2">
                   (Drag photos to reorder)
                 </span>
               </h3>
               
               {currentGallery.photos.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No photos in this gallery yet</p>
+                <p className="text-rurikon-400 text-center py-8">No photos in this gallery yet</p>
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {currentGallery.photos
@@ -325,7 +323,7 @@ export default function PhotosManagement() {
                         onDragStart={() => handleDragStart(photo.id)}
                         onDragOver={handleDragOver}
                         onDrop={(e) => handleDrop(e, photo.id, currentGallery.slug)}
-                        className="relative group cursor-move bg-gray-100 rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow"
+                        className="relative group cursor-move bg-white rounded-lg overflow-hidden border border-rurikon-100 hover:border-rurikon-300 transition-all"
                       >
                         <div className="aspect-square relative">
                           <img
@@ -338,7 +336,7 @@ export default function PhotosManagement() {
                           </div>
                           <button
                             onClick={() => handleDeletePhoto(currentGallery.slug, photo.id)}
-                            className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                            className="absolute top-2 right-2 bg-rurikon-600 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-rurikon-700"
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                               <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
@@ -353,19 +351,19 @@ export default function PhotosManagement() {
                                 value={editingUrl}
                                 onChange={(e) => setEditingUrl(e.target.value)}
                                 placeholder="Photo URL"
-                                className="w-full text-xs px-2 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 text-gray-900"
+                                className="w-full text-xs px-2 py-1 border border-rurikon-200 rounded focus:ring-1 focus:ring-rurikon-400 text-rurikon-600"
                               />
                               <input
                                 type="text"
                                 value={editingAlt}
                                 onChange={(e) => setEditingAlt(e.target.value)}
                                 placeholder="Alt text"
-                                className="w-full text-xs px-2 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 text-gray-900"
+                                className="w-full text-xs px-2 py-1 border border-rurikon-200 rounded focus:ring-1 focus:ring-rurikon-400 text-rurikon-600"
                               />
                               <select
                                 value={editingVariant}
                                 onChange={(e) => setEditingVariant(e.target.value as 'original' | 'square')}
-                                className="w-full text-xs px-2 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 text-gray-900"
+                                className="w-full text-xs px-2 py-1 border border-rurikon-200 rounded focus:ring-1 focus:ring-rurikon-400 text-rurikon-600"
                               >
                                 <option value="original">Original</option>
                                 <option value="square">Square</option>
@@ -373,7 +371,7 @@ export default function PhotosManagement() {
                               <div className="flex gap-1">
                                 <button
                                   onClick={() => handleUpdatePhoto(currentGallery.slug, photo.id, editingUrl, editingAlt, editingVariant)}
-                                  className="flex-1 bg-blue-500 text-white text-xs px-2 py-1 rounded hover:bg-blue-600"
+                                  className="flex-1 bg-rurikon-600 text-white text-xs px-2 py-1 rounded hover:bg-rurikon-700 lowercase"
                                 >
                                   Save
                                 </button>
@@ -384,7 +382,7 @@ export default function PhotosManagement() {
                                     setEditingUrl('');
                                     setEditingVariant('original');
                                   }}
-                                  className="flex-1 bg-gray-300 text-gray-700 text-xs px-2 py-1 rounded hover:bg-gray-400"
+                                  className="flex-1 bg-rurikon-100 text-rurikon-600 text-xs px-2 py-1 rounded hover:bg-rurikon-200 lowercase"
                                 >
                                   Cancel
                                 </button>
@@ -392,14 +390,14 @@ export default function PhotosManagement() {
                             </div>
                           ) : (
                             <div>
-                              <p className="text-xs text-gray-500 truncate mb-1">{photo.url}</p>
+                              <p className="text-xs text-rurikon-400 truncate mb-1">{photo.url}</p>
                               <div className="flex items-center justify-between mb-1">
-                                <p className="text-xs text-gray-700 truncate flex-1">
+                                <p className="text-xs text-rurikon-600 truncate flex-1">
                                   {photo.alt ? `${photo.alt}` : 'No alt text'}
                                 </p>
                               </div>
                               <div className="flex items-center justify-between">
-                                <p className="text-xs text-gray-600">
+                                <p className="text-xs text-rurikon-600 lowercase">
                                   Variant: {photo.variant || 'original'}
                                 </p>
                                 <button
@@ -409,7 +407,7 @@ export default function PhotosManagement() {
                                     setEditingUrl(photo.url);
                                     setEditingVariant(photo.variant || 'original');
                                   }}
-                                  className="text-blue-500 hover:text-blue-700 text-xs ml-2"
+                                  className="text-rurikon-600 hover:text-rurikon-700 text-xs ml-2 lowercase"
                                 >
                                   Edit
                                 </button>

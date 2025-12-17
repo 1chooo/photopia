@@ -37,25 +37,23 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <div className="mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-rurikon-800">Admin</h1>
-          <p className="text-rurikon-400 mt-2 lowercase">Welcome back, {user?.email?.split('@')[0]}!</p>
-        </div>
+      <div>
+        <h1 className="font-semibold mb-7 text-rurikon-600">Admin</h1>
+        <p className="mt-7 text-rurikon-600 lowercase">Welcome back, {user?.email?.split('@')[0]}!</p>
 
         {error && (
-          <div className="bg-rurikon-50 border border-rurikon-200 text-rurikon-800 px-4 py-3 rounded mb-6">
+          <div className="mt-7 bg-rurikon-50 border border-rurikon-200 text-rurikon-800 px-4 py-3 rounded">
             Failed to load dashboard data. Please try again.
           </div>
         )}
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="mt-14 grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white rounded-lg border border-rurikon-100 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-rurikon-400 font-medium lowercase">Total Galleries</p>
-                <p className="text-3xl font-bold text-rurikon-800 mt-2">
+                <p className="text-sm text-rurikon-400 lowercase">Total Galleries</p>
+                <p className="text-3xl font-semibold text-rurikon-600 mt-2">
                   {isLoading ? '...' : stats.totalGalleries}
                 </p>
               </div>
@@ -66,8 +64,8 @@ export default function DashboardPage() {
           <div className="bg-white rounded-lg border border-rurikon-100 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-rurikon-400 font-medium lowercase">Total Photos</p>
-                <p className="text-3xl font-bold text-rurikon-800 mt-2">
+                <p className="text-sm text-rurikon-400 lowercase">Total Photos</p>
+                <p className="text-3xl font-semibold text-rurikon-600 mt-2">
                   {isLoading ? '...' : stats.totalPhotos}
                 </p>
               </div>
@@ -78,8 +76,8 @@ export default function DashboardPage() {
           <div className="bg-white rounded-lg border border-rurikon-100 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-rurikon-400 font-medium lowercase">Account Status</p>
-                <p className="text-lg font-bold text-rurikon-600 mt-2 lowercase">Active</p>
+                <p className="text-sm text-rurikon-400 lowercase">Account Status</p>
+                <p className="text-lg font-semibold text-rurikon-600 mt-2 lowercase">Active</p>
               </div>
               <div className="text-4xl">✅</div>
             </div>
@@ -87,24 +85,24 @@ export default function DashboardPage() {
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-white rounded-lg border border-rurikon-100 p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4 text-rurikon-800 lowercase">System Information</h2>
-          <div className="space-y-3">
+        <div className="mt-7 bg-white rounded-lg border border-rurikon-100 p-6">
+          <h2 className="font-semibold mb-7 text-rurikon-600 lowercase">System Information</h2>
+          <div>
             <div className="flex justify-between py-3 border-b border-rurikon-100">
-              <span className="text-rurikon-400 lowercase">Last Activity</span>
-              <span className="font-medium text-rurikon-600">{stats.recentActivity}</span>
+              <span className="text-rurikon-600 lowercase">Last Activity</span>
+              <span className="text-rurikon-600">{stats.recentActivity}</span>
             </div>
             <div className="flex justify-between py-3 border-b border-rurikon-100">
-              <span className="text-rurikon-400 lowercase">User Email</span>
-              <span className="font-medium text-rurikon-600">{user?.email}</span>
+              <span className="text-rurikon-600 lowercase">User Email</span>
+              <span className="text-rurikon-600">{user?.email}</span>
             </div>
             <div className="flex justify-between py-3 border-b border-rurikon-100">
-              <span className="text-rurikon-400 lowercase">User ID</span>
-              <span className="font-mono text-sm text-rurikon-500">{user?.uid}</span>
+              <span className="text-rurikon-600 lowercase">User ID</span>
+              <span className="font-mono text-sm text-rurikon-600">{user?.uid}</span>
             </div>
             <div className="flex justify-between py-3">
-              <span className="text-rurikon-400 lowercase">Account Created</span>
-              <span className="font-medium text-rurikon-600">
+              <span className="text-rurikon-600 lowercase">Account Created</span>
+              <span className="text-rurikon-600">
                 {user?.metadata?.creationTime || 'N/A'}
               </span>
             </div>
@@ -112,8 +110,8 @@ export default function DashboardPage() {
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-white rounded-lg border border-rurikon-100 p-6">
-          <h2 className="text-xl font-semibold mb-4 text-rurikon-800 lowercase">Quick Actions</h2>
+        <div className="mt-7 bg-white rounded-lg border border-rurikon-100 p-6">
+          <h2 className="font-semibold mb-7 text-rurikon-600 lowercase">Quick Actions</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <a
               href="/dashboard/photos"
@@ -121,7 +119,7 @@ export default function DashboardPage() {
             >
               <span className="text-3xl">📸</span>
               <div>
-                <h3 className="font-semibold text-rurikon-800 lowercase">Manage Photos</h3>
+                <h3 className="font-semibold text-rurikon-600 lowercase">Manage Photos</h3>
                 <p className="text-sm text-rurikon-600 lowercase">Add, edit, or remove photos from galleries</p>
               </div>
             </a>
@@ -132,7 +130,7 @@ export default function DashboardPage() {
             >
               <span className="text-3xl">🔄</span>
               <div className="text-left">
-                <h3 className="font-semibold text-rurikon-800 lowercase">Refresh Stats</h3>
+                <h3 className="font-semibold text-rurikon-600 lowercase">Refresh Stats</h3>
                 <p className="text-sm text-rurikon-600 lowercase">Update dashboard statistics</p>
               </div>
             </button>

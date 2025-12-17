@@ -5,6 +5,8 @@ import { useState, useEffect } from 'react';
 interface Photo {
   id: string;
   url: string;
+  alt?: string;
+  variant?: 'original' | 'square';
   order: number;
   createdAt: string;
 }
@@ -19,8 +21,14 @@ export default function PhotosManagement() {
   const [selectedSlug, setSelectedSlug] = useState<string>('');
   const [newSlug, setNewSlug] = useState<string>('');
   const [newPhotoUrl, setNewPhotoUrl] = useState<string>('');
+  const [newPhotoAlt, setNewPhotoAlt] = useState<string>('');
+  const [newPhotoVariant, setNewPhotoVariant] = useState<'original' | 'square'>('original');
   const [loading, setLoading] = useState(false);
   const [draggedPhoto, setDraggedPhoto] = useState<string | null>(null);
+  const [editingPhotoId, setEditingPhotoId] = useState<string | null>(null);
+  const [editingAlt, setEditingAlt] = useState<string>('');
+  const [editingUrl, setEditingUrl] = useState<string>('');
+  const [editingVariant, setEditingVariant] = useState<'original' | 'square'>('original');
 
   useEffect(() => {
     fetchAllGalleries();
@@ -54,11 +62,15 @@ export default function PhotosManagement() {
         body: JSON.stringify({
           slug: slugToUse,
           url: newPhotoUrl.trim(),
+          alt: newPhotoAlt.trim(),
+          variant: newPhotoVariant,
         }),
       });
 
       if (response.ok) {
         setNewPhotoUrl('');
+        setNewPhotoAlt('');
+        setNewPhotoVariant('original');
         setNewSlug('');
         await fetchAllGalleries();
         setSelectedSlug(slugToUse);
@@ -89,6 +101,29 @@ export default function PhotosManagement() {
     } catch (error) {
       console.error('Error deleting photo:', error);
       alert('Delete failed');
+    }
+  };
+
+  const handleUpdatePhoto = async (slug: string, photoId: string, url: string, alt: string, variant: 'original' | 'square') => {
+    try {
+      const response = await fetch('/api/photos', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug, photoId, url, alt, variant }),
+      });
+
+      if (response.ok) {
+        await fetchAllGalleries();
+        setEditingPhotoId(null);
+        setEditingAlt('');
+        setEditingUrl('');
+        setEditingVariant('original');
+      } else {
+        alert('Update failed');
+      }
+    } catch (error) {
+      console.error('Error updating photo:', error);
+      alert('Update failed');
     }
   };
 
@@ -195,6 +230,33 @@ export default function PhotosManagement() {
               />
             </div>
 
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Alt Text (Optional)
+              </label>
+              <input
+                type="text"
+                value={newPhotoAlt}
+                onChange={(e) => setNewPhotoAlt(e.target.value)}
+                placeholder="Describe the photo for accessibility"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Variant
+              </label>
+              <select
+                value={newPhotoVariant}
+                onChange={(e) => setNewPhotoVariant(e.target.value as 'original' | 'square')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+              >
+                <option value="original">Original (Default)</option>
+                <option value="square">Square</option>
+              </select>
+            </div>
+
             <button
               type="submit"
               disabled={loading}
@@ -256,7 +318,7 @@ export default function PhotosManagement() {
                         <div className="aspect-square relative">
                           <img
                             src={photo.url}
-                            alt={`Photo ${photo.order + 1}`}
+                            alt={photo.alt || `Photo ${photo.order + 1}`}
                             className="w-full h-full object-cover"
                           />
                           <div className="absolute top-2 left-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
@@ -272,7 +334,76 @@ export default function PhotosManagement() {
                           </button>
                         </div>
                         <div className="p-2 bg-white">
-                          <p className="text-xs text-gray-500 truncate">{photo.url}</p>
+                          {editingPhotoId === photo.id ? (
+                            <div className="space-y-2">
+                              <input
+                                type="url"
+                                value={editingUrl}
+                                onChange={(e) => setEditingUrl(e.target.value)}
+                                placeholder="Photo URL"
+                                className="w-full text-xs px-2 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 text-gray-900"
+                              />
+                              <input
+                                type="text"
+                                value={editingAlt}
+                                onChange={(e) => setEditingAlt(e.target.value)}
+                                placeholder="Alt text"
+                                className="w-full text-xs px-2 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 text-gray-900"
+                              />
+                              <select
+                                value={editingVariant}
+                                onChange={(e) => setEditingVariant(e.target.value as 'original' | 'square')}
+                                className="w-full text-xs px-2 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 text-gray-900"
+                              >
+                                <option value="original">Original</option>
+                                <option value="square">Square</option>
+                              </select>
+                              <div className="flex gap-1">
+                                <button
+                                  onClick={() => handleUpdatePhoto(currentGallery.slug, photo.id, editingUrl, editingAlt, editingVariant)}
+                                  className="flex-1 bg-blue-500 text-white text-xs px-2 py-1 rounded hover:bg-blue-600"
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setEditingPhotoId(null);
+                                    setEditingAlt('');
+                                    setEditingUrl('');
+                                    setEditingVariant('original');
+                                  }}
+                                  className="flex-1 bg-gray-300 text-gray-700 text-xs px-2 py-1 rounded hover:bg-gray-400"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div>
+                              <p className="text-xs text-gray-500 truncate mb-1">{photo.url}</p>
+                              <div className="flex items-center justify-between mb-1">
+                                <p className="text-xs text-gray-700 truncate flex-1">
+                                  {photo.alt ? `${photo.alt}` : 'No alt text'}
+                                </p>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <p className="text-xs text-gray-600">
+                                  Variant: {photo.variant || 'original'}
+                                </p>
+                                <button
+                                  onClick={() => {
+                                    setEditingPhotoId(photo.id);
+                                    setEditingAlt(photo.alt || '');
+                                    setEditingUrl(photo.url);
+                                    setEditingVariant(photo.variant || 'original');
+                                  }}
+                                  className="text-blue-500 hover:text-blue-700 text-xs ml-2"
+                                >
+                                  Edit
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}

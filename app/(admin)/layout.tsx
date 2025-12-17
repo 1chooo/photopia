@@ -124,7 +124,7 @@ export default function AdminLayout({
           </div>
           <button
             onClick={handleSignOut}
-            className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors font-medium text-sm"
+            className="w-full px-4 py-2 hover:bg-red-700 rounded-lg transition-colors font-medium text-sm"
           >
             Sign Out
           </button>

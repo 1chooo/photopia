@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
   try {
     const db = getAdminDb();
     const body = await request.json();
-    const { slug, url } = body;
+    const { slug, url, alt, variant } = body;
 
     if (!slug || !url) {
       return NextResponse.json(
@@ -58,6 +58,8 @@ export async function POST(request: NextRequest) {
     const newPhoto = {
       id: `photo-${Date.now()}`,
       url,
+      alt: alt || '',
+      variant: variant || 'original',
       order: doc.exists ? (doc.data()?.photos?.length || 0) : 0,
       createdAt: new Date().toISOString(),
     };
@@ -118,6 +120,56 @@ export async function PUT(request: NextRequest) {
     console.error('Error updating photos:', error);
     return NextResponse.json(
       { error: 'Failed to update photos' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const db = getAdminDb();
+    const body = await request.json();
+    const { slug, photoId, alt, url, variant } = body;
+
+    if (!slug || !photoId) {
+      return NextResponse.json(
+        { error: 'Slug and photoId are required' },
+        { status: 400 }
+      );
+    }
+
+    const docRef = db.collection('photo-gallery').doc(slug);
+    const doc = await docRef.get();
+
+    if (!doc.exists) {
+      return NextResponse.json(
+        { error: 'Slug not found' },
+        { status: 404 }
+      );
+    }
+
+    const photos = doc.data()?.photos || [];
+    const updatedPhotos = photos.map((photo: any) => {
+      if (photo.id === photoId) {
+        const updates: any = { ...photo };
+        if (alt !== undefined) updates.alt = alt;
+        if (url !== undefined) updates.url = url;
+        if (variant !== undefined) updates.variant = variant;
+        return updates;
+      }
+      return photo;
+    });
+
+    await docRef.update({
+      photos: updatedPhotos,
+      updatedAt: new Date().toISOString(),
+    });
+
+    return NextResponse.json({ success: true }, { status: 200 });
+  } catch (error) {
+    console.error('Error updating photo:', error);
+    return NextResponse.json(
+      { error: 'Failed to update photo' },
       { status: 500 }
     );
   }

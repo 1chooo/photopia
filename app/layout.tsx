@@ -1,7 +1,4 @@
 import type { Metadata, Viewport } from 'next'
-import { Analytics } from '@vercel/analytics/next'
-
-import { ViewTransition } from 'react'
 import { GoogleTagManager } from '@next/third-parties/google'
 import { GoogleAnalytics } from '@next/third-parties/google'
 
@@ -9,8 +6,7 @@ import cn from 'clsx'
 import localFont from 'next/font/local'
 import 'katex/dist/katex.min.css'
 
-import Navbar from '@/components/navbar'
-import './globals.css'
+import '@/app/globals.css'
 
 const sans = localFont({
   src: './_fonts/InterVariable.woff2',
@@ -66,19 +62,7 @@ export default function RootLayout({
           "antialiased",
         )}
       >
-        <div className="fixed sm:hidden h-6 sm:h-10 md:h-14 w-full top-0 left-0 z-30 pointer-events-none content-fade-out" />
-        <div className="flex flex-col mobile:flex-row">
-          <Navbar />
-          <main className="relative flex-1 contain-[inline-size]">
-            <div className="absolute w-full h-px opacity-50 bg-rurikon-border right-0 mobile:right-auto mobile:left-0 mobile:w-px mobile:h-full mobile:opacity-100 mix-blend-multiply" />
-            <ViewTransition name="crossfade">
-              <article className="pl-0 pt-6 mobile:pt-0 mobile:pl-6 sm:pl-10 md:pl-14">
-                {children}
-              </article>
-            </ViewTransition>
-          </main>
-        </div>
-        <Analytics />
+        {children}
       </body>
       {gaId && <GoogleAnalytics gaId={gaId} />}
     </html>

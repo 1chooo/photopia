@@ -10,6 +10,7 @@ export const metadata = {
 const articlesDirectory = path.join(
   process.cwd(),
   'app',
+  '(home)',
   'episodes',
   '_articles'
 )

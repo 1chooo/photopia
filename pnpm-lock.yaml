@@ -39,7 +39,7 @@ importers:
         specifier: 2.1.0
         version: 2.1.0
       firebase:
-        specifier: ^12.7.0
+        specifier: 12.7.0
         version: 12.7.0
       katex:
         specifier: 0.16.11

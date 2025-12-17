@@ -1,49 +1,150 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
-import { signOut } from 'firebase/auth'
-import { auth } from '@/lib/firebase/config'
 import { useAuth } from '@/lib/firebase/useAuth'
+import { useEffect, useState } from 'react'
+
+interface SystemStats {
+  totalGalleries: number
+  totalPhotos: number
+  recentActivity: string
+}
 
 export default function DashboardPage() {
   const { user } = useAuth()
-  const router = useRouter()
+  const [stats, setStats] = useState<SystemStats>({
+    totalGalleries: 0,
+    totalPhotos: 0,
+    recentActivity: 'Loading...'
+  })
+  const [loading, setLoading] = useState(true)
 
-  const handleSignOut = async () => {
+  useEffect(() => {
+    fetchStats()
+  }, [])
+
+  const fetchStats = async () => {
     try {
-      await signOut(auth)
-      router.push('/signin')
+      const response = await fetch('/api/photos')
+      const data = await response.json()
+      const galleries = data.galleries || []
+      
+      const totalPhotos = galleries.reduce((sum: number, gallery: any) => 
+        sum + (gallery.photos?.length || 0), 0
+      )
+
+      setStats({
+        totalGalleries: galleries.length,
+        totalPhotos,
+        recentActivity: new Date().toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        })
+      })
     } catch (error) {
-      console.error('Failed to sign out:', error)
+      console.error('Error fetching stats:', error)
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen p-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-          <button
-            onClick={handleSignOut}
-            className="px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-md hover:bg-red-100 hover:border-red-300 transition-colors font-medium"
-          >
-            Sign Out
-          </button>
+    <div className="p-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard Overview</h1>
+          <p className="text-gray-600 mt-2">Welcome back, {user?.email?.split('@')[0]}!</p>
         </div>
 
-        <div className="space-y-6">
-          <div className="p-6 border border-rurikon-border rounded-lg">
-            <h2 className="text-xl font-semibold mb-4">Welcome!</h2>
-            <p className="text-rurikon-500">
-              You are signed in as: <span className="font-medium">{user?.email}</span>
-            </p>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 font-medium">Total Galleries</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">
+                  {loading ? '...' : stats.totalGalleries}
+                </p>
+              </div>
+              <div className="text-4xl">📁</div>
+            </div>
           </div>
 
-          <div className="p-6 border border-rurikon-border rounded-lg">
-            <h2 className="text-xl font-semibold mb-4">Dashboard Content</h2>
-            <p className="text-rurikon-500">
-              This is your admin dashboard. You can add your admin functionalities here.
-            </p>
+          <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 font-medium">Total Photos</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">
+                  {loading ? '...' : stats.totalPhotos}
+                </p>
+              </div>
+              <div className="text-4xl">📸</div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 font-medium">Account Status</p>
+                <p className="text-lg font-bold text-green-600 mt-2">Active</p>
+              </div>
+              <div className="text-4xl">✅</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Activity */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <h2 className="text-xl font-semibold mb-4 text-gray-900">System Information</h2>
+          <div className="space-y-3">
+            <div className="flex justify-between py-3 border-b border-gray-200">
+              <span className="text-gray-600">Last Activity</span>
+              <span className="font-medium text-gray-900">{stats.recentActivity}</span>
+            </div>
+            <div className="flex justify-between py-3 border-b border-gray-200">
+              <span className="text-gray-600">User Email</span>
+              <span className="font-medium text-gray-900">{user?.email}</span>
+            </div>
+            <div className="flex justify-between py-3 border-b border-gray-200">
+              <span className="text-gray-600">User ID</span>
+              <span className="font-mono text-sm text-gray-700">{user?.uid}</span>
+            </div>
+            <div className="flex justify-between py-3">
+              <span className="text-gray-600">Account Created</span>
+              <span className="font-medium text-gray-900">
+                {user?.metadata?.creationTime || 'N/A'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-xl font-semibold mb-4 text-gray-900">Quick Actions</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <a
+              href="/dashboard/photos"
+              className="flex items-center space-x-4 p-4 bg-blue-50 border-2 border-blue-200 rounded-lg hover:bg-blue-100 hover:border-blue-300 transition-colors"
+            >
+              <span className="text-3xl">📸</span>
+              <div>
+                <h3 className="font-semibold text-blue-900">Manage Photos</h3>
+                <p className="text-sm text-blue-700">Add, edit, or remove photos from galleries</p>
+              </div>
+            </a>
+
+            <button
+              onClick={fetchStats}
+              className="flex items-center space-x-4 p-4 bg-green-50 border-2 border-green-200 rounded-lg hover:bg-green-100 hover:border-green-300 transition-colors"
+            >
+              <span className="text-3xl">🔄</span>
+              <div className="text-left">
+                <h3 className="font-semibold text-green-900">Refresh Stats</h3>
+                <p className="text-sm text-green-700">Update dashboard statistics</p>
+              </div>
+            </button>
           </div>
         </div>
       </div>

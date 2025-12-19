@@ -15,23 +15,30 @@ interface GalleryPhotosProps {
 
 async function getPhotos(slug: string): Promise<PhotoData[]> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    const isDev = process.env.NODE_ENV === 'development';
+    const { getAdminDb } = await import('@/lib/firebase/admin');
+    const db = getAdminDb();
     
-    const response = await fetch(`${baseUrl}/api/photos?slug=${slug}`, {
-      next: { 
-        revalidate: isDev ? 0 : 3600, // No cache in dev, 1 hour in production
-        tags: [`gallery-${slug}`] // Tag for on-demand revalidation
-      },
-    });
+    // 從 telegram-categories collection 獲取資料
+    const docRef = db.collection('telegram-categories').doc(slug);
+    const doc = await docRef.get();
     
-    if (!response.ok) {
-      console.error('Failed to fetch photos');
+    if (!doc.exists) {
+      console.log(`Category "${slug}" not found`);
       return [];
     }
     
-    const data = await response.json();
-    return data.photos || [];
+    const data = doc.data();
+    const images = data?.images || [];
+    
+    // 將 telegram-categories 格式轉換為 PhotoData 格式
+    return images.map((img: any, index: number) => ({
+      id: img.id,
+      url: img.url,
+      alt: img.alt || '',
+      variant: img.variant || 'original',
+      order: index, // 使用陣列順序作為 order
+      createdAt: img.uploaded_at || new Date().toISOString(),
+    }));
   } catch (error) {
     console.error('Error fetching photos:', error);
     return [];
@@ -47,20 +54,18 @@ export default async function GalleryPhotos({ slug }: GalleryPhotosProps) {
 
   return (
     <>
-      {photos
-        .sort((a, b) => a.order - b.order)
-        .map((photo) => (
-          <Photo
-            key={photo.id}
-            image={{
-              id: photo.id,
-              src: `/api/photos/image/${slug}/${photo.order}`,
-              alt: photo.alt || '',
-            }}
-            title={photo.alt || undefined}
-            variant={photo.variant || 'original'}
-          />
-        ))}
+      {photos.map((photo) => (
+        <Photo
+          key={photo.id}
+          image={{
+            id: photo.id,
+            src: photo.url, // 直接使用圖片的 URL
+            alt: photo.alt || '',
+          }}
+          title={photo.alt || undefined}
+          variant={photo.variant || 'original'}
+        />
+      ))}
     </>
   );
 }

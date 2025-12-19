@@ -49,7 +49,7 @@ const fetcher = async (url: string) => {
 export default function PhotosManagement() {
   const { user } = useAuth();
   const { data, error, isLoading } = useSWR<{ categories: Gallery[] }>(
-    user ? '/api/telegram/category' : null,
+    user ? '/api/category' : null,
     fetcher,
     {
       revalidateOnFocus: true,
@@ -78,7 +78,7 @@ export default function PhotosManagement() {
 
     try {
       const idToken = await user.getIdToken();
-      const response = await fetch(`/api/telegram/category?slug=${slug}&photoId=${photoId}`, {
+      const response = await fetch(`/api/category?slug=${slug}&photoId=${photoId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${idToken}`,
@@ -86,7 +86,7 @@ export default function PhotosManagement() {
       });
 
       if (response.ok) {
-        await mutate('/api/telegram/category');
+        await mutate('/api/category');
       } else {
         alert('Delete failed');
       }
@@ -101,7 +101,7 @@ export default function PhotosManagement() {
     
     try {
       const idToken = await user.getIdToken();
-      const response = await fetch('/api/telegram/category', {
+      const response = await fetch('/api/category', {
         method: 'PATCH',
         headers: { 
           'Authorization': `Bearer ${idToken}`,
@@ -111,7 +111,7 @@ export default function PhotosManagement() {
       });
 
       if (response.ok) {
-        await mutate('/api/telegram/category');
+        await mutate('/api/category');
         setEditingPhotoId(null);
         setEditingAlt('');
         setEditingUrl('');
@@ -151,7 +151,7 @@ export default function PhotosManagement() {
 
     try {
       const idToken = await user.getIdToken();
-      const response = await fetch('/api/telegram/category', {
+      const response = await fetch('/api/category', {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${idToken}`,
@@ -161,7 +161,7 @@ export default function PhotosManagement() {
       });
 
       if (response.ok) {
-        await mutate('/api/telegram/category');
+        await mutate('/api/category');
       }
     } catch (error) {
       console.error('Error reordering photos:', error);
@@ -188,7 +188,7 @@ export default function PhotosManagement() {
     setLoading(true);
     try {
       const idToken = await user.getIdToken();
-      const response = await fetch('/api/telegram/category/rename', {
+      const response = await fetch('/api/category/rename', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${idToken}`,
@@ -198,7 +198,7 @@ export default function PhotosManagement() {
       });
 
       if (response.ok) {
-        await mutate('/api/telegram/category');
+        await mutate('/api/category');
         setSelectedSlug(newSlug);
         setEditingSlug(null);
         setNewSlugName('');

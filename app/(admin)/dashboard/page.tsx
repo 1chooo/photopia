@@ -42,7 +42,7 @@ export default function DashboardPage() {
 
   // 從 Telegram Images API 獲取圖片資料
   const { data: imagesData, error: imagesError, isLoading: imagesLoading } = useSWR(
-    idToken ? ['/api/telegram/images', idToken] : null,
+    idToken ? ['/api/images', idToken] : null,
     ([url, token]) => fetcher(url, token),
     {
       refreshInterval: 30000,
@@ -52,7 +52,7 @@ export default function DashboardPage() {
 
   // 從 Category API 獲取分類資料
   const { data: categoriesData, error: categoriesError, isLoading: categoriesLoading } = useSWR(
-    idToken ? ['/api/telegram/category', idToken] : null,
+    idToken ? ['/api/category', idToken] : null,
     ([url, token]) => fetcher(url, token),
     {
       refreshInterval: 30000,
@@ -189,8 +189,8 @@ export default function DashboardPage() {
               <button
                 onClick={() => {
                   if (idToken) {
-                    mutate(['/api/telegram/images', idToken])
-                    mutate(['/api/telegram/category', idToken])
+                    mutate(['/api/images', idToken])
+                    mutate(['/api/category', idToken])
                   }
                   mutate('/api/homepage')
                 }}

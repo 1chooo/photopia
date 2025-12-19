@@ -53,7 +53,7 @@ export default function TelegramUploadPage() {
 
   // Fetch uploaded images using SWR
   const { data, error: fetchError, isLoading } = useSWR<{ images: UploadedImage[] }>(
-    user ? '/api/telegram/images' : null,
+    user ? '/api/images' : null,
     fetcher,
     {
       revalidateOnFocus: true,
@@ -133,7 +133,7 @@ export default function TelegramUploadPage() {
           const formData = new FormData()
           formData.append('file', file)
 
-          const response = await fetch('/api/telegram/upload', {
+          const response = await fetch('/api/upload', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${idToken}`,
@@ -180,7 +180,7 @@ export default function TelegramUploadPage() {
       }
 
       // Refresh uploaded images list
-      await mutate('/api/telegram/images')
+      await mutate('/api/images')
 
       setFailedUploads(failed)
 
@@ -248,7 +248,7 @@ export default function TelegramUploadPage() {
 
     try {
       const idToken = await user!.getIdToken()
-      const response = await fetch(`/api/telegram/images?id=${imageId}`, {
+      const response = await fetch(`/api/images?id=${imageId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${idToken}`,
@@ -259,7 +259,7 @@ export default function TelegramUploadPage() {
         throw new Error('Failed to delete image')
       }
 
-      await mutate('/api/telegram/images')
+      await mutate('/api/images')
       setSuccess('Image deleted successfully')
       setTimeout(() => setSuccess(null), 3000)
     } catch (err) {

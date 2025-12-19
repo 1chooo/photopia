@@ -76,13 +76,13 @@ export default function CategoryManagementPage() {
 
   // --- Data Fetching (保持不變) ---
   const { data: imagesData, isLoading: imagesLoading } = useSWR<{ images: UploadedImage[] }>(
-    user ? '/api/telegram/images' : null,
+    user ? '/api/images' : null,
     fetcher,
     { revalidateOnFocus: true }
   );
 
   const { data: categoriesData } = useSWR<{ categories: CategoryInfo[] }>(
-    user ? '/api/telegram/category' : null,
+    user ? '/api/category' : null,
     fetcher,
     { revalidateOnFocus: true }
   );
@@ -140,7 +140,7 @@ export default function CategoryManagementPage() {
     setSaving(true);
     try {
       const idToken = await user.getIdToken();
-      const response = await fetch('/api/telegram/category', {
+      const response = await fetch('/api/category', {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${idToken}`,
@@ -153,8 +153,8 @@ export default function CategoryManagementPage() {
         }),
       });
       if (!response.ok) throw new Error('Failed to update slug');
-      await mutate('/api/telegram/images');
-      await mutate('/api/telegram/category');
+      await mutate('/api/images');
+      await mutate('/api/category');
       setEditingImageId(null);
       setSlugInput('');
       setSelectedSlug('');
@@ -215,7 +215,7 @@ export default function CategoryManagementPage() {
     setSaving(true);
     try {
       const idToken = await user.getIdToken();
-      const response = await fetch('/api/telegram/category/batch', {
+      const response = await fetch('/api/category/batch', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${idToken}`,
@@ -228,8 +228,8 @@ export default function CategoryManagementPage() {
         }),
       });
       if (!response.ok) throw new Error('Failed to batch update slug');
-      await mutate('/api/telegram/images');
-      await mutate('/api/telegram/category');
+      await mutate('/api/images');
+      await mutate('/api/category');
       setSelectedImages(new Set());
       setBatchMode(false);
       setBatchSlugInput('');

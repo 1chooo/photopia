@@ -88,7 +88,7 @@ export default function HomepagePhotosManagement() {
   }, [user]);
 
   const { data: imagesData } = useSWR(
-    idToken ? ['/api/telegram/images', idToken] : null,
+    idToken ? ['/api/images', idToken] : null,
     ([url, token]) => fetcher(url, token),
     { revalidateOnFocus: true }
   );

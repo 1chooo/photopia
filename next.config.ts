@@ -28,12 +28,6 @@ export default withMDX()({
         pathname: '/**',
       },
       {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '3000',
-        pathname: '/api/photos/image/**',
-      },
-      {
         protocol: 'https',
         hostname: 'photo.1chooo.com',
         port: '',

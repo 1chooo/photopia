@@ -445,7 +445,7 @@ export default function HomepagePhotosManagement() {
                           {photo.alt || photo.file_name}
                         </p>
                         <p className="text-[10px] text-gray-400 truncate mt-0.5">
-                          {photo.category || 'Uncategorized'}
+                          {photo.category || 'Unpinned'}
                         </p>
                       </div>
                     </div>

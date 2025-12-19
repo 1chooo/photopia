@@ -529,7 +529,7 @@ export default function TelegramUploadPage() {
                                 </a>
                                 <button
                                   onClick={() => handleCopyUrl(image.url)}
-                                  className="shrink-0 inline-flex items-center gap-1 text-xs bg-rurikon-50 hover:bg-rurikon-100 text-rurikon-600 px-2 py-1 rounded transition-colors border border-rurikon-200"
+                                  className="shrink-0 inline-flex items-center gap-1 text-xs bg-rurikon-50 hover:bg-rurikon-100 text-rurikon-600 px-2 py-1 rounded transition-colors border border-rurikon-200 cursor-pointer"
                                 >
                                   <Copy className="w-3 h-3" />
                                   {copySuccess === image.url ? 'Copied!' : 'Copy'}

@@ -2,7 +2,18 @@
 
 import { useAuth } from '@/lib/firebase/useAuth'
 import useSWR, { mutate } from 'swr'
-import { Folder, RefreshCw, Image as ImageIcon, Pin } from 'lucide-react'
+import { 
+  Folder, 
+  RefreshCw, 
+  Image as ImageIcon, 
+  Pin, 
+  LayoutDashboard,
+  Clock,
+  ArrowUpRight,
+  Activity,
+  User,
+  Calendar
+} from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 interface SystemStats {
@@ -79,163 +90,209 @@ export default function DashboardPage() {
   const isLoading = imagesLoading || categoriesLoading || homepageLoading
   const error = imagesError || categoriesError || homepageError
 
+  // UI Components helpers
+  const StatCard = ({ 
+    title, 
+    value, 
+    icon: Icon, 
+    colorClass, 
+    bgClass 
+  }: { 
+    title: string; 
+    value: number; 
+    icon: any; 
+    colorClass: string; 
+    bgClass: string 
+  }) => (
+    <div className="bg-white rounded-xl border border-rurikon-100 p-6 shadow-sm hover:shadow-md transition-all duration-300 group">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-sm font-medium text-gray-500 mb-1">{title}</p>
+          <div className="flex items-baseline gap-2">
+            <h3 className={`text-3xl font-bold ${colorClass}`}>
+              {isLoading ? (
+                <div className="h-9 w-16 bg-gray-100 rounded animate-pulse" />
+              ) : (
+                value
+              )}
+            </h3>
+          </div>
+        </div>
+        <div className={`p-3 rounded-lg ${bgClass} transition-colors group-hover:scale-110 duration-300`}>
+          <Icon className={`h-6 w-6 ${colorClass}`} />
+        </div>
+      </div>
+    </div>
+  )
+
   return (
-    <div>
-      <div>
-        <h1 className="font-semibold mb-7 text-rurikon-600">Admin</h1>
-        <p className="mt-7 text-rurikon-600 lowercase">Welcome back, {user?.email?.split('@')[0]}!</p>
+    <div className="min-h-screen pb-10">
+      
+      {/* Header Section */}
+      <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-rurikon-800 flex items-center gap-2">
+            <LayoutDashboard className="h-6 w-6 text-rurikon-600" />
+            Dashboard
+          </h1>
+          <p className="mt-2 text-gray-500">
+            Welcome back, <span className="font-semibold text-rurikon-600">{user?.email?.split('@')[0]}</span>
+          </p>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-gray-400 bg-white px-3 py-1.5 rounded-full border border-gray-100 shadow-sm">
+          <Clock className="h-4 w-4" />
+          <span>{stats.recentActivity}</span>
+        </div>
+      </div>
 
-        {error && (
-          <div className="mt-7 bg-rurikon-50 border border-rurikon-200 text-rurikon-800 px-4 py-3 rounded">
-            Failed to load dashboard data. Please try again.
-          </div>
-        )}
+      {error && (
+        <div className="mb-8 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg flex items-center gap-2">
+          <Activity className="h-4 w-4" />
+          Failed to load dashboard data. Please try again.
+        </div>
+      )}
 
-        {/* Stats Grid */}
-        <div className="mt-14 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="bg-white rounded-lg border border-rurikon-100 border-l-4 border-l-rurikon-600 p-4">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="h-10 w-10 rounded-lg bg-rurikon-50 border border-rurikon-200 flex items-center justify-center">
-                <Folder className="h-5 w-5 text-rurikon-600" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm text-rurikon-400 lowercase">Total Categories</p>
-                <p className="text-2xl font-semibold text-rurikon-600 mt-1">
-                  {isLoading ? (
-                    <span className="animate-pulse">...</span>
-                  ) : (
-                    stats.totalCategories
-                  )}
-                </p>
-              </div>
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <StatCard 
+          title="Total Categories" 
+          value={stats.totalCategories} 
+          icon={Folder} 
+          colorClass="text-rurikon-600" 
+          bgClass="bg-rurikon-50" 
+        />
+        <StatCard 
+          title="Total Images" 
+          value={stats.totalImages} 
+          icon={ImageIcon} 
+          colorClass="text-blue-600" 
+          bgClass="bg-blue-50" 
+        />
+        <StatCard 
+          title="Homepage Pinned" 
+          value={stats.totalHomepageImages} 
+          icon={Pin} 
+          colorClass="text-purple-600" 
+          bgClass="bg-purple-50" 
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {/* Quick Actions (Takes up 2 columns) */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="bg-white rounded-xl border border-rurikon-100 p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="font-semibold text-gray-800 flex items-center gap-2">
+                Quick Actions
+              </h2>
+              <button
+                onClick={() => {
+                  if (idToken) {
+                    mutate(['/api/telegram/images', idToken])
+                    mutate(['/api/telegram/category', idToken])
+                  }
+                  mutate('/api/homepage')
+                }}
+                className="text-xs flex items-center gap-1 text-rurikon-600 hover:text-rurikon-800 transition-colors bg-rurikon-50 px-2 py-1 rounded hover:bg-rurikon-100 cursor-pointer"
+              >
+                <RefreshCw className={`h-3 w-3 ${isLoading ? 'animate-spin' : ''}`} />
+                Refresh Data
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <a
+                href="/dashboard/telegram"
+                className="group relative flex flex-col p-5 bg-white border border-gray-200 rounded-xl hover:border-rurikon-300 hover:shadow-md transition-all duration-200"
+              >
+                <div className="absolute top-4 right-4 text-gray-300 group-hover:text-rurikon-400 transition-colors">
+                  <ArrowUpRight className="h-5 w-5" />
+                </div>
+                <div className="h-10 w-10 rounded-lg bg-blue-50 flex items-center justify-center mb-3 text-blue-600 group-hover:scale-110 transition-transform">
+                  <ImageIcon className="h-5 w-5" />
+                </div>
+                <h3 className="font-semibold text-gray-800 group-hover:text-rurikon-600 transition-colors">Upload Images</h3>
+                <p className="text-sm text-gray-500 mt-1">Upload photos directly via Telegram storage integration.</p>
+              </a>
+
+              <a
+                href="/dashboard/category"
+                className="group relative flex flex-col p-5 bg-white border border-gray-200 rounded-xl hover:border-rurikon-300 hover:shadow-md transition-all duration-200"
+              >
+                <div className="absolute top-4 right-4 text-gray-300 group-hover:text-rurikon-400 transition-colors">
+                  <ArrowUpRight className="h-5 w-5" />
+                </div>
+                <div className="h-10 w-10 rounded-lg bg-orange-50 flex items-center justify-center mb-3 text-orange-600 group-hover:scale-110 transition-transform">
+                  <Folder className="h-5 w-5" />
+                </div>
+                <h3 className="font-semibold text-gray-800 group-hover:text-rurikon-600 transition-colors">Manage Categories</h3>
+                <p className="text-sm text-gray-500 mt-1">Organize your uploaded images into specific collections.</p>
+              </a>
+
+              <a
+                href="/dashboard/homepage"
+                className="group relative flex flex-col p-5 bg-white border border-gray-200 rounded-xl hover:border-rurikon-300 hover:shadow-md transition-all duration-200 md:col-span-2"
+              >
+                <div className="absolute top-4 right-4 text-gray-300 group-hover:text-rurikon-400 transition-colors">
+                  <ArrowUpRight className="h-5 w-5" />
+                </div>
+                <div className="flex items-start gap-4">
+                  <div className="h-10 w-10 rounded-lg bg-purple-50 flex items-center justify-center shrink-0 text-purple-600 group-hover:scale-110 transition-transform">
+                    <Pin className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-800 group-hover:text-rurikon-600 transition-colors">Homepage Gallery</h3>
+                    <p className="text-sm text-gray-500 mt-1">Select and reorder featured images for your public homepage display.</p>
+                  </div>
+                </div>
+              </a>
             </div>
           </div>
+        </div>
 
-          <div className="bg-white rounded-lg border border-rurikon-100 border-l-4 border-l-rurikon-600 p-4">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="h-10 w-10 rounded-lg bg-rurikon-50 border border-rurikon-200 flex items-center justify-center">
-                <ImageIcon className="h-5 w-5 text-rurikon-600" />
+        {/* System Info (Takes up 1 column) */}
+        <div className="space-y-6">
+          <div className="bg-white rounded-xl border border-rurikon-100 p-6 shadow-sm h-full">
+            <h2 className="font-semibold text-gray-800 mb-6 flex items-center gap-2">
+              <Activity className="w-4 h-4 text-gray-400" />
+              System Status
+            </h2>
+            
+            <div className="space-y-4">
+              <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                <div className="flex items-center gap-2 text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">
+                  <User className="w-3 h-3" /> User Account
+                </div>
+                <div className="text-sm font-medium text-gray-800 truncate" title={user?.email || ''}>
+                  {user?.email}
+                </div>
+                <div className="text-xs text-gray-400 font-mono mt-1 truncate" title={user?.uid}>
+                  ID: {user?.uid}
+                </div>
               </div>
-              <div className="flex-1">
-                <p className="text-sm text-rurikon-400 lowercase">Total Images</p>
-                <p className="text-2xl font-semibold text-rurikon-600 mt-1">
-                  {isLoading ? (
-                    <span className="animate-pulse">...</span>
-                  ) : (
-                    stats.totalImages
-                  )}
-                </p>
-              </div>
-            </div>
-          </div>
 
-          <div className="bg-white rounded-lg border border-rurikon-100 border-l-4 border-l-purple-600 p-4">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="h-10 w-10 rounded-lg bg-purple-50 border border-purple-200 flex items-center justify-center">
-                <Pin className="h-5 w-5 text-purple-600" />
+              <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                <div className="flex items-center gap-2 text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">
+                  <Calendar className="w-3 h-3" /> Member Since
+                </div>
+                <div className="text-sm font-medium text-gray-800">
+                  {user?.metadata?.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString() : 'N/A'}
+                </div>
               </div>
-              <div className="flex-1">
-                <p className="text-sm text-rurikon-400 lowercase">Homepage Pinned</p>
-                <p className="text-2xl font-semibold text-purple-600 mt-1">
-                  {isLoading ? (
-                    <span className="animate-pulse">...</span>
-                  ) : (
-                    stats.totalHomepageImages
-                  )}
-                </p>
+
+              <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                 <div className="flex items-center gap-2 text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">
+                  <Clock className="w-3 h-3" /> Last Activity
+                </div>
+                <div className="text-sm font-medium text-gray-800">
+                   {stats.recentActivity}
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Recent Activity */}
-        <div className="mt-7 bg-white rounded-lg border border-rurikon-100 p-6">
-          <h2 className="font-semibold mb-7 text-rurikon-600 lowercase">System Information</h2>
-          <div>
-            <div className="flex justify-between py-3 border-b border-rurikon-100">
-              <span className="text-rurikon-600 lowercase">Last Activity</span>
-              <span className="text-rurikon-600">{stats.recentActivity}</span>
-            </div>
-            <div className="flex justify-between py-3 border-b border-rurikon-100">
-              <span className="text-rurikon-600 lowercase">User Email</span>
-              <span className="text-rurikon-600">{user?.email}</span>
-            </div>
-            <div className="flex justify-between py-3 border-b border-rurikon-100">
-              <span className="text-rurikon-600 lowercase">User ID</span>
-              <span className="font-mono text-sm text-rurikon-600">{user?.uid}</span>
-            </div>
-            <div className="flex justify-between py-3">
-              <span className="text-rurikon-600 lowercase">Account Created</span>
-              <span className="text-rurikon-600">
-                {user?.metadata?.creationTime || 'N/A'}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="mt-7 bg-white rounded-lg border border-rurikon-100 p-6">
-          <h2 className="font-semibold mb-7 text-rurikon-600 lowercase">Quick Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <a
-              href="/dashboard/telegram"
-              className="flex items-center space-x-4 p-4 bg-rurikon-50 border-2 border-rurikon-200 rounded-lg hover:bg-rurikon-100 hover:border-rurikon-300 transition-colors"
-            >
-              <div className="h-10 w-10 rounded-lg bg-white border border-rurikon-200 flex items-center justify-center shrink-0">
-                <ImageIcon className="h-5 w-5 text-rurikon-600" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-rurikon-600 lowercase">Upload Images</h3>
-                <p className="text-sm text-rurikon-600 lowercase">Upload photos via Telegram storage</p>
-              </div>
-            </a>
-
-            <a
-              href="/dashboard/category"
-              className="flex items-center space-x-4 p-4 bg-rurikon-50 border-2 border-rurikon-200 rounded-lg hover:bg-rurikon-100 hover:border-rurikon-300 transition-colors"
-            >
-              <div className="h-10 w-10 rounded-lg bg-white border border-rurikon-200 flex items-center justify-center shrink-0">
-                <Folder className="h-5 w-5 text-rurikon-600" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-rurikon-600 lowercase">Manage Categories</h3>
-                <p className="text-sm text-rurikon-600 lowercase">Organize images into categories</p>
-              </div>
-            </a>
-
-            <a
-              href="/dashboard/homepage"
-              className="flex items-center space-x-4 p-4 bg-purple-50 border-2 border-purple-200 rounded-lg hover:bg-purple-100 hover:border-purple-300 transition-colors"
-            >
-              <div className="h-10 w-10 rounded-lg bg-white border border-purple-200 flex items-center justify-center shrink-0">
-                <Pin className="h-5 w-5 text-purple-600" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-purple-600 lowercase">Homepage Pins</h3>
-                <p className="text-sm text-rurikon-600 lowercase">Select featured images for homepage</p>
-              </div>
-            </a>
-
-            <button
-              onClick={() => {
-                if (idToken) {
-                  mutate(['/api/telegram/images', idToken])
-                  mutate(['/api/telegram/category', idToken])
-                }
-                mutate('/api/homepage')
-              }}
-              className="flex items-center space-x-4 p-4 bg-rurikon-50 border-2 border-rurikon-200 rounded-lg hover:bg-rurikon-100 hover:border-rurikon-300 transition-colors"
-            >
-              <div className="h-10 w-10 rounded-lg bg-white border border-rurikon-200 flex items-center justify-center shrink-0">
-                <RefreshCw className="h-5 w-5 text-rurikon-600" />
-              </div>
-              <div className="text-left">
-                <h3 className="font-semibold text-rurikon-600 lowercase">Refresh Stats</h3>
-                <p className="text-sm text-rurikon-600 lowercase">Update dashboard statistics</p>
-              </div>
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   )

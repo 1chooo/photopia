@@ -17,6 +17,13 @@ interface UploadedImage {
   alt?: string
 }
 
+interface FailedUpload {
+  file: File
+  fileName: string
+  error: string
+  errorType: 'network' | 'validation' | 'telegram' | 'server' | 'unknown'
+}
+
 const fetcher = async (url: string) => {
   const auth = (await import('firebase/auth')).getAuth()
   const user = auth.currentUser
@@ -41,6 +48,7 @@ export default function TelegramUploadPage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [copySuccess, setCopySuccess] = useState<string | null>(null)
+  const [failedUploads, setFailedUploads] = useState<FailedUpload[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // 使用 SWR 從 DB 獲取圖片
@@ -102,23 +110,24 @@ export default function TelegramUploadPage() {
     })
   }
 
-  const handleUpload = async () => {
-    if (selectedFiles.length === 0 || !user) return
+  const handleUpload = async (filesToUpload?: File[]) => {
+    const files = filesToUpload || selectedFiles
+    if (files.length === 0 || !user) return
 
     setUploading(true)
     setError(null)
     setSuccess(null)
-    setUploadProgress({ current: 0, total: selectedFiles.length })
+    const failed: FailedUpload[] = []
+    setUploadProgress({ current: 0, total: files.length })
 
     try {
       const idToken = await user.getIdToken()
-      const errors: string[] = []
       let successCount = 0
 
       // 逐一上傳每個檔案
-      for (let i = 0; i < selectedFiles.length; i++) {
-        const file = selectedFiles[i]
-        setUploadProgress({ current: i + 1, total: selectedFiles.length })
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        setUploadProgress({ current: i + 1, total: files.length })
 
         try {
           const formData = new FormData()
@@ -135,29 +144,60 @@ export default function TelegramUploadPage() {
           const data = await response.json()
 
           if (!response.ok) {
-            throw new Error(data.error || '上傳失敗')
-          }
+            // 分類錯誤類型
+            let errorType: FailedUpload['errorType'] = 'unknown'
+            let errorMessage = data.error || '上傳失敗'
 
-          successCount++
+            if (response.status === 400) {
+              errorType = 'validation'
+            } else if (response.status === 401 || response.status === 403) {
+              errorType = 'server'
+              errorMessage = '認證失敗，請重新登入'
+            } else if (response.status === 500) {
+              errorType = 'server'
+            } else if (errorMessage.includes('Telegram')) {
+              errorType = 'telegram'
+            }
+
+            failed.push({
+              file,
+              fileName: file.name,
+              error: errorMessage,
+              errorType,
+            })
+          } else {
+            successCount++
+          }
         } catch (err) {
-          errors.push(`${file.name}: ${err instanceof Error ? err.message : '上傳失敗'}`)
+          // 捕獲網絡錯誤或其他異常
+          failed.push({
+            file,
+            fileName: file.name,
+            error: err instanceof Error ? err.message : '網絡錯誤或請求失敗',
+            errorType: 'network',
+          })
         }
       }
 
       // 重新驗證 SWR 數據
       await mutate('/api/telegram/images')
 
-      if (errors.length > 0) {
-        setError(`成功上傳 ${successCount}/${selectedFiles.length} 張\n${errors.join('\n')}`)
+      setFailedUploads(failed)
+
+      if (failed.length > 0) {
+        setError(`成功上傳 ${successCount}/${files.length} 張，${failed.length} 張失敗`)
       } else {
         setSuccess(`成功上傳 ${successCount} 張照片！`)
+        setFailedUploads([])
       }
       
-      // 清空選擇
-      setSelectedFiles([])
-      setPreviewUrls([])
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
+      // 只清空成功上傳的檔案
+      if (!filesToUpload && failed.length === 0) {
+        setSelectedFiles([])
+        setPreviewUrls([])
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ''
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : '上傳失敗，請重試')
@@ -179,6 +219,27 @@ export default function TelegramUploadPage() {
       if (fileInputRef.current) {
         fileInputRef.current.value = ''
       }
+    }
+  }
+
+  const handleRetryFailed = async () => {
+    if (failedUploads.length === 0) return
+    const filesToRetry = failedUploads.map(f => f.file)
+    setFailedUploads([])
+    await handleUpload(filesToRetry)
+  }
+
+  const handleRemoveFailed = (index: number) => {
+    setFailedUploads(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const getErrorTypeLabel = (type: FailedUpload['errorType']) => {
+    switch (type) {
+      case 'network': return '網絡錯誤'
+      case 'validation': return '檔案驗證失敗'
+      case 'telegram': return 'Telegram API 錯誤'
+      case 'server': return '伺服器錯誤'
+      default: return '未知錯誤'
     }
   }
 
@@ -259,15 +320,15 @@ export default function TelegramUploadPage() {
               >
                 <Upload className="w-12 h-12 text-rurikon-300 mb-4" />
                 <p className="text-rurikon-600 mb-2">
-                  點擊選擇圖片或拖放到這裡
+                  Click to select images or drag and drop here
                 </p>
                 <p className="text-sm text-rurikon-400">
-                  支持多選，JPG, PNG, GIF 等格式，單檔最大 10MB
+                  Support JPG, PNG, GIF up to 10MB each
                 </p>
               </label>
             ) : (
               <div className="space-y-4">
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                   {previewUrls.map((url, index) => (
                     <div key={index} className="relative group">
                       <img
@@ -281,7 +342,7 @@ export default function TelegramUploadPage() {
                       >
                         <X className="w-3 h-3" />
                       </button>
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2 rounded-b-lg">
+                      <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/60 to-transparent p-2 rounded-b-lg">
                         <p className="text-xs text-white truncate">{selectedFiles[index]?.name}</p>
                       </div>
                     </div>
@@ -311,7 +372,7 @@ export default function TelegramUploadPage() {
                   </div>
                 )}
                 <button
-                  onClick={handleUpload}
+                  onClick={() => handleUpload()}
                   disabled={uploading}
                   className="w-full px-6 py-2 bg-rurikon-600 text-white rounded-lg hover:bg-rurikon-700 disabled:bg-rurikon-300 disabled:cursor-not-allowed transition-colors font-medium"
                 >
@@ -333,6 +394,47 @@ export default function TelegramUploadPage() {
             <div className="mt-4 flex items-center gap-2 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg">
               <CheckCircle className="w-5 h-5 shrink-0" />
               <p>{success}</p>
+            </div>
+          )}
+
+          {/* Failed Uploads Details */}
+          {failedUploads.length > 0 && (
+            <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold text-red-900 flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5" />
+                  上傳失敗的檔案 ({failedUploads.length})
+                </h3>
+                <button
+                  onClick={handleRetryFailed}
+                  disabled={uploading}
+                  className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 disabled:bg-red-300 disabled:cursor-not-allowed transition-colors"
+                >
+                  {uploading ? '重試中...' : '重試全部'}
+                </button>
+              </div>
+              <div className="space-y-2">
+                {failedUploads.map((failed, index) => (
+                  <div key={index} className="bg-white border border-red-200 rounded p-3 flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="font-medium text-red-900 truncate">{failed.fileName}</p>
+                        <span className="px-2 py-0.5 text-xs bg-red-100 text-red-700 rounded">
+                          {getErrorTypeLabel(failed.errorType)}
+                        </span>
+                      </div>
+                      <p className="text-sm text-red-700">{failed.error}</p>
+                    </div>
+                    <button
+                      onClick={() => handleRemoveFailed(index)}
+                      className="text-red-400 hover:text-red-600 transition-colors shrink-0"
+                      title="移除此項"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>

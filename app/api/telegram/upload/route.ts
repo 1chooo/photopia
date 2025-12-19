@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 檢查必要的環境變數
+    // check bot token and chat id
     if (!BOT_TOKEN || !CHAT_ID) {
       return NextResponse.json(
         { error: "Server configuration error" },
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1. 接收前端上傳的檔案
+    // 1. Parse the incoming form data
     const formData = await req.formData();
     const file = formData.get("file") as File;
 
@@ -54,29 +54,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    // 驗證文件類型
+    // Validate file type (only images allowed)
     if (!file.type.startsWith("image/")) {
       return NextResponse.json(
-        { error: "Invalid file type - Only images are allowed" },
+        { error: `File type ${file.type} is not supported. Only image files are allowed.` },
         { status: 400 }
       );
     }
 
-    // 驗證文件大小 (例如：最大 10MB)
+    // Validate file size (limit to 10MB)
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
+      const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
       return NextResponse.json(
-        { error: "File too large - Maximum size is 10MB" },
+        { error: `10MB The file size (${sizeMB}MB) exceeds the 10MB limit.
+        ` },
         { status: 400 }
       );
     }
 
-    // 2. 準備轉傳給 Telegram 的 FormData
+    // 2. prepare FormData for Telegram API
     const telegramFormData = new FormData();
     telegramFormData.append("chat_id", CHAT_ID);
     telegramFormData.append("photo", file);
 
-    // 3. 上傳照片到 Telegram (sendPhoto)
+    // 3. Upload image to Telegram (sendPhoto method)
     const uploadRes = await fetch(
       `https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`,
       {
@@ -89,17 +91,23 @@ export async function POST(req: NextRequest) {
 
     if (!uploadData.ok) {
       console.error("Telegram Error:", uploadData);
+      
+      // Supply more specific error messages based on Telegram's response
+      const telegramError = uploadData.description || "Failed to upload to Telegram";
       return NextResponse.json(
-        { error: "Failed to upload to Telegram" },
+        { 
+          error: `Telegram API 錯誤: ${telegramError}`,
+          details: uploadData
+        },
         { status: 500 }
       );
     }
 
-    // 4. 取得照片的 File ID (拿陣列中最後一個，因為那是解析度最高的)
+    // 4. Get the file_id from Telegram response
     const photos = uploadData.result.photo;
     const fileId = photos[photos.length - 1].file_id;
 
-    // 5. 用 File ID 換取下載路徑 (getFile)
+    // 5. Use getFile to get the file path
     const getFileRes = await fetch(
       `https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${fileId}`
     );
@@ -107,18 +115,22 @@ export async function POST(req: NextRequest) {
 
     if (!getFileData.ok) {
       console.error("Telegram getFile Error:", getFileData);
+      const telegramError = getFileData.description || "Failed to get file URL";
       return NextResponse.json(
-        { error: "Failed to get file URL from Telegram" },
+        { 
+          error: `Telegram getFile 錯誤: ${telegramError}`,
+          details: getFileData
+        },
         { status: 500 }
       );
     }
 
     const filePath = getFileData.result.file_path;
 
-    // 6. 組合出圖片連結
+    // 6. Construct the file download URL
     const fileUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${filePath}`;
 
-    // 7. 存儲到 Firestore
+    // 7. Store image metadata in Firestore
     const db = getAdminDb();
     const imageData = {
       id: `tg-${Date.now()}`,
@@ -132,7 +144,19 @@ export async function POST(req: NextRequest) {
       telegram_file_path: filePath,
     };
 
-    await db.collection('tg-as-image-storage').doc(imageData.id).set(imageData);
+    try {
+      await db.collection('tg-as-image-storage').doc(imageData.id).set(imageData);
+    } catch (dbError) {
+      console.error("Firestore Error:", dbError);
+      return NextResponse.json(
+        { 
+          error: "Image uploaded to Telegram but failed to save in database",
+          file_url: fileUrl,
+          details: dbError instanceof Error ? dbError.message : "Unknown database error"
+        },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
@@ -140,8 +164,24 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error("Server Error:", error);
+    
+    // Provide more specific error messages based on the error type
+    let errorMessage = "Internal Server Error";
+    if (error instanceof Error) {
+      if (error.message.includes("fetch")) {
+        errorMessage = "Failed to connect to Telegram API, please try again later";
+      } else if (error.message.includes("timeout")) {
+        errorMessage = "Request to Telegram API timed out, please try again";
+      } else {
+        errorMessage = error.message;
+      }
+    }
+    
     return NextResponse.json(
-      { error: "Internal server error" },
+      { 
+        error: errorMessage,
+        details: error instanceof Error ? error.message : "Unknown error"
+      },
       { status: 500 }
     );
   }

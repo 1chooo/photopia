@@ -156,13 +156,13 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl">
+    <div>
       <div className="mb-8 border-b pb-4 border-neutral-200/50 dark:border-neutral-700/50">
         <h1 className="text-3xl font-bold mb-2">
           Settings
         </h1>
         <p className="opacity-70">
-          管理您的 Telegram Chat 設定
+          Manage your Telegram bot chats and configurations here.
         </p>
       </div>
 
@@ -246,7 +246,7 @@ export default function SettingsPage() {
                     <div className="space-y-2">
                       <label className="flex items-center gap-2 text-sm font-medium">
                         <MessageCircle className="w-4 h-4" />
-                        Chat 名稱
+                        Chat Name
                       </label>
                       <input
                         type="text"

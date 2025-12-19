@@ -199,7 +199,7 @@ export default function TelegramUploadPage() {
       if (failed.length > 0) {
         setError(`Uploaded ${successCount} out of ${files.length} images. ${failed.length} failed.`)
       } else {
-        setSuccess(`Uploaded all ${files.length} images successfully!`)
+        setSuccess(`Uploaded ${files.length === 1 ? '' : 'all '}${files.length} image${files.length === 1 ? '' : 's'} successfully!`)
         setFailedUploads([])
       }
 
@@ -212,7 +212,7 @@ export default function TelegramUploadPage() {
         }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : '上傳失敗，請重試')
+      setError(err instanceof Error ? err.message : 'Failed to upload images')
     } finally {
       setUploading(false)
       setUploadProgress(null)
@@ -401,7 +401,7 @@ export default function TelegramUploadPage() {
                     disabled={uploading}
                     className="w-full px-6 py-2 bg-rurikon-600 text-white rounded-lg hover:bg-rurikon-700 disabled:bg-rurikon-300 disabled:cursor-not-allowed transition-colors font-medium"
                   >
-                    {uploading ? `上傳中... (${uploadProgress?.current || 0}/${uploadProgress?.total || 0})` : `上傳 ${selectedFiles.length} 張到 Telegram`}
+                    {uploading ? `Uploading... (${uploadProgress?.current || 0}/${uploadProgress?.total || 0})` : `Upload ${selectedFiles.length} image${selectedFiles.length > 1 ? 's' : ''} to Telegram`}
                   </button>
                 </div>
               )}

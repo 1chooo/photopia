@@ -24,18 +24,6 @@ function migrateOldSettings(settings: UserSettings): TelegramChat[] {
   if (settings.telegramChats && settings.telegramChats.length > 0) {
     return settings.telegramChats;
   }
-  
-  // 如果有舊的單一 chat 設定，轉換成新格式
-  if (settings.telegramBotToken && settings.telegramChatId) {
-    return [{
-      id: 'default',
-      name: 'Default Chat',
-      botToken: settings.telegramBotToken,
-      chatId: settings.telegramChatId,
-      isDefault: true
-    }];
-  }
-  
   return [];
 }
 

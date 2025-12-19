@@ -54,17 +54,6 @@ function getDefaultChat(settings: UserSettings | null, chatId?: string): Telegra
     return settings.telegramChats.find(chat => chat.isDefault) || settings.telegramChats[0];
   }
   
-  // 向後相容：支援舊的單一 chat 格式
-  if (settings.telegramBotToken && settings.telegramChatId) {
-    return {
-      id: 'legacy',
-      name: 'Default Chat',
-      botToken: settings.telegramBotToken,
-      chatId: settings.telegramChatId,
-      isDefault: true
-    };
-  }
-  
   return null;
 }
 

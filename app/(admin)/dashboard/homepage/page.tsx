@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import useSWR, { mutate } from 'swr';
-import { ImageIcon, Plus, X } from 'lucide-react';
+import { ImageIcon, Plus, X, LayoutGrid, GripVertical, Check, Loader2, ImagePlus } from 'lucide-react';
 import Image from 'next/image';
 import { useAuth } from '@/lib/firebase/useAuth';
 
+// --- Interfaces (保持不變) ---
 interface Photo {
   id: string;
   url: string;
@@ -25,7 +26,7 @@ interface SelectedPhoto {
   order: number;
 }
 
-// Gallery layouts for different column counts
+// --- Layout Logic (保持不變) ---
 const getGalleryLayout = (columns: 1 | 2 | 3 | 4) => {
   switch (columns) {
     case 1:
@@ -120,14 +121,7 @@ export default function HomepagePhotosManagement() {
     photo => !selectedPhotos.some(sp => sp.photoId === photo.id)
   );
 
-  if (authLoading || !user || !idToken) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <p className="text-rurikon-400">Loading...</p>
-      </div>
-    );
-  }
-
+  // --- Handlers (保持不變) ---
   const handleAddPhoto = async (photo: Photo) => {
     const newSelected = [
       ...selectedPhotos,
@@ -222,32 +216,63 @@ export default function HomepagePhotosManagement() {
     setDraggedIndex(null);
   };
 
-  return (
-    <div>
-      <h1 className="font-semibold mb-7 text-rurikon-600">Homepage Photos</h1>
+  if (authLoading || !user || !idToken) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] text-rurikon-400">
+        <Loader2 className="w-10 h-10 animate-spin mb-4 text-rurikon-600" />
+        <p>Loading assets...</p>
+      </div>
+    );
+  }
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left: Selected Photos with Gallery Layout */}
-        <div className="bg-white rounded-lg border border-rurikon-100 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-rurikon-600 lowercase flex items-center gap-2">
-              <ImageIcon className="w-5 h-5" />
-              Homepage Preview ({selectedPhotoObjects.length})
-            </h2>
+  
+
+  return (
+    <div className="pb-10 max-w-400 mx-auto">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+        <div>
+           <h1 className="text-2xl font-bold text-rurikon-800 tracking-tight">Homepage Gallery</h1>
+           <p className="text-gray-500 text-sm mt-1">Manage the featured photos displayed on your homepage.</p>
+        </div>
+        
+        {saving && (
+          <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm border border-rurikon-100 animate-pulse">
+            <Loader2 className="w-4 h-4 animate-spin text-rurikon-600" />
+            <span className="text-sm font-medium text-rurikon-600">Saving changes...</span>
+          </div>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        {/* Left: Preview Canvas (Dominant) */}
+        <div className="lg:col-span-8 space-y-4">
+          
+          {/* Controls Bar */}
+          <div className="bg-white rounded-xl border border-rurikon-100 p-4 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4 sticky top-4 z-20">
             <div className="flex items-center gap-2">
-              {saving && (
-                <span className="text-sm text-rurikon-400 lowercase mr-2">saving...</span>
-              )}
-              <div className="flex gap-1 border border-rurikon-200 rounded-md overflow-hidden">
+              <div className="p-2 bg-rurikon-50 text-rurikon-600 rounded-lg">
+                <LayoutGrid className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-gray-800 text-sm">Live Preview</h2>
+                <p className="text-xs text-gray-400">{selectedPhotoObjects.length} photos selected</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-gray-400 uppercase font-semibold tracking-wider hidden sm:inline-block">Columns</span>
+              <div className="flex bg-gray-100 p-1 rounded-lg">
                 {[1, 2, 3, 4].map((cols) => (
                   <button
                     key={cols}
                     onClick={() => setPreviewColumns(cols as 1 | 2 | 3 | 4)}
-                    className={`px-3 py-1 text-xs font-medium transition-colors ${previewColumns === cols
-                      ? 'bg-rurikon-600 text-white'
-                      : 'bg-white text-rurikon-600 hover:bg-rurikon-50'
-                      }`}
-                    title={`Preview ${cols} column${cols > 1 ? 's' : ''}`}
+                    className={`w-8 h-8 flex items-center justify-center rounded-md text-sm font-medium transition-all ${
+                      previewColumns === cols
+                        ? 'bg-white text-rurikon-600 shadow-sm ring-1 ring-black/5'
+                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'
+                    }`}
+                    title={`Set to ${cols} column${cols > 1 ? 's' : ''}`}
                   >
                     {cols}
                   </button>
@@ -256,159 +281,182 @@ export default function HomepagePhotosManagement() {
             </div>
           </div>
 
-          <p className="text-sm text-rurikon-400 mb-4 lowercase">
-            Drag photos to reorder • Click × to remove
-          </p>
+          {/* Canvas Area */}
+          <div className="bg-gray-50/50 border border-rurikon-100 rounded-xl min-h-125 p-4 sm:p-6 lg:p-8">
+            {selectedPhotoObjects.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center py-20 border-2 border-dashed border-gray-200 rounded-lg">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4 text-gray-400">
+                  <ImagePlus className="w-8 h-8" />
+                </div>
+                <h3 className="text-lg font-medium text-gray-900">Your gallery is empty</h3>
+                <p className="text-gray-500 mt-2 max-w-xs text-center">
+                  Select photos from the library on the right to add them to your homepage.
+                </p>
+              </div>
+            ) : (
+              <div className="w-full transition-all duration-300">
+                <div className="flex flex-wrap w-full -m-2">
+                  {(() => {
+                    let imageIndex = 0;
+                    const galleryLayout = getGalleryLayout(previewColumns);
+                    const totalImagesInPattern = galleryLayout.columns.reduce(
+                      (sum, column) => sum + column.length,
+                      0
+                    );
+                    const timesToRepeat = Math.ceil(selectedPhotoObjects.length / totalImagesInPattern);
+                    const extendedColumns = Array.from({ length: timesToRepeat }, (_, repeatIndex) =>
+                      galleryLayout.columns.map((column, columnIndex) => ({
+                        column,
+                        key: `${repeatIndex}-${columnIndex}`,
+                      }))
+                    ).flat();
 
-          {selectedPhotoObjects.length === 0 ? (
-            <div className="text-center py-12 text-rurikon-400">
-              <ImageIcon className="w-12 h-12 mx-auto mb-3 opacity-30" />
-              <p className="lowercase">No photos selected</p>
-              <p className="text-sm mt-1 lowercase">Add photos from the right panel</p>
-            </div>
-          ) : (
-            <div className="w-full">
-              <div className="flex flex-wrap w-full">
-                {(() => {
-                  let imageIndex = 0;
-                  const galleryLayout = getGalleryLayout(previewColumns);
-                  const totalImagesInPattern = galleryLayout.columns.reduce(
-                    (sum, column) => sum + column.length,
-                    0
-                  );
-                  const timesToRepeat = Math.ceil(selectedPhotoObjects.length / totalImagesInPattern);
-                  const extendedColumns = Array.from({ length: timesToRepeat }, (_, repeatIndex) =>
-                    galleryLayout.columns.map((column, columnIndex) => ({
-                      column,
-                      key: `${repeatIndex}-${columnIndex}`,
-                    }))
-                  ).flat();
+                    return extendedColumns.map(({ column, key }) => {
+                      const columnImages: { photo: typeof selectedPhotoObjects[0]; size: 'full' | 'half'; index: number }[] = [];
 
-                  return extendedColumns.map(({ column, key }) => {
-                    const columnImages: { photo: typeof selectedPhotoObjects[0]; size: 'full' | 'half'; index: number }[] = [];
+                      column.forEach((item) => {
+                        if (imageIndex < selectedPhotoObjects.length) {
+                          columnImages.push({
+                            photo: selectedPhotoObjects[imageIndex],
+                            size: item.size as 'full' | 'half',
+                            index: imageIndex,
+                          });
+                          imageIndex++;
+                        }
+                      });
 
-                    column.forEach((item) => {
-                      if (imageIndex < selectedPhotoObjects.length) {
-                        columnImages.push({
-                          photo: selectedPhotoObjects[imageIndex],
-                          size: item.size as 'full' | 'half',
-                          index: imageIndex,
-                        });
-                        imageIndex++;
-                      }
-                    });
+                      if (columnImages.length === 0) return null;
 
-                    if (columnImages.length === 0) {
-                      return null;
-                    }
+                      return (
+                        <div key={key} className="flex w-full md:w-1/2 flex-wrap">
+                          {columnImages.map((item) => {
+                            const widthClass = item.size === 'full' ? 'w-full' : 'w-full md:w-1/2';
 
-                    return (
-                      <div
-                        key={key}
-                        className="flex w-full md:w-1/2 flex-wrap"
-                      >
-                        {columnImages.map((item) => {
-                          const widthClass = item.size === 'full' ? 'w-full' : 'w-full md:w-1/2';
+                            return (
+                              <div key={item.photo!.id} className={`${widthClass} p-2`}>
+                                <div
+                                  draggable
+                                  onDragStart={() => handleDragStart(item.index)}
+                                  onDragOver={handleDragOver}
+                                  onDrop={(e) => handleDrop(e, item.index)}
+                                  className="group relative h-full w-full rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all cursor-grab active:cursor-grabbing hover:-translate-y-0.5"
+                                >
+                                  {/* Aspect Ratio Container */}
+                                  <div className="aspect-3/2 relative bg-gray-200">
+                                    <Image
+                                      src={item.photo!.url}
+                                      alt={item.photo!.alt || ''}
+                                      fill
+                                      quality={75}
+                                      className="object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                                      sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                                      unoptimized
+                                    />
+                                    
+                                    {/* Overlay Actions */}
+                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300">
+                                      {/* Order Badge */}
+                                      <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-sm text-white text-xs font-mono px-2 py-1 rounded-md flex items-center gap-1 shadow-sm">
+                                        <span className="text-gray-300">#</span>
+                                        {item.index + 1}
+                                      </div>
 
-                          return (
-                            <div
-                              key={item.photo!.id}
-                              className={`${widthClass} p-1`}
-                            >
-                              <div
-                                draggable
-                                onDragStart={() => handleDragStart(item.index)}
-                                onDragOver={handleDragOver}
-                                onDrop={(e) => handleDrop(e, item.index)}
-                                className="relative group cursor-move h-full w-full"
-                              >
-                                <div className="aspect-3/2 relative overflow-hidden rounded-md">
-                                  <Image
-                                    src={item.photo!.url}
-                                    alt={item.photo!.alt || ''}
-                                    fill
-                                    quality={70}
-                                    className="object-cover object-center"
-                                    sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                                    unoptimized
-                                  />
-                                  <div className="absolute inset-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center">
-                                    <button
-                                      onClick={() => handleRemovePhoto(item.photo!.id)}
-                                      className="opacity-0 group-hover:opacity-100 bg-rurikon-600 text-white p-2 rounded-full hover:bg-red-600 transition-all"
-                                      title="Remove from homepage"
-                                    >
-                                      <X className="w-4 h-4" />
-                                    </button>
-                                  </div>
-                                  <div className="absolute top-2 left-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
-                                    #{item.index + 1}
+                                      {/* Drag Handle Indicator */}
+                                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-white pointer-events-none">
+                                          <GripVertical className="w-8 h-8 drop-shadow-md" />
+                                      </div>
+
+                                      {/* Remove Button */}
+                                      <button
+                                        onClick={() => handleRemovePhoto(item.photo!.id)}
+                                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 bg-white/90 text-red-500 p-1.5 rounded-full hover:bg-red-500 hover:text-white transition-all shadow-sm transform hover:scale-110"
+                                        title="Remove from homepage"
+                                      >
+                                        <X className="w-4 h-4" />
+                                      </button>
+                                    </div>
                                   </div>
                                 </div>
                               </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    );
-                  });
-                })()}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Right: All Available Photos */}
-        <div className="bg-white rounded-lg border border-rurikon-100 p-6">
-          <h2 className="font-semibold text-rurikon-600 mb-4 lowercase flex items-center gap-2">
-            <ImageIcon className="w-5 h-5" />
-            All Photos ({unselectedPhotos.length} available)
-          </h2>
-
-          <p className="text-sm text-rurikon-400 mb-4 lowercase">
-            Click + to add to homepage
-          </p>
-
-          {unselectedPhotos.length === 0 ? (
-            <div className="text-center py-12 text-rurikon-400">
-              <p className="lowercase">All photos are selected</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-3 max-h-150 overflow-y-auto pr-2">
-              {unselectedPhotos.map((photo) => (
-                <div
-                  key={photo.id}
-                  className="relative group rounded-lg overflow-hidden bg-rurikon-50 border border-rurikon-200 hover:border-rurikon-400 transition-all"
-                >
-                  <div className="aspect-square bg-rurikon-100">
-                    <img
-                      src={photo.url}
-                      alt={photo.alt || ''}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-
-                  <div className="absolute inset-0 bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center cursor-pointer">
-                    <button
-                      onClick={() => handleAddPhoto(photo)}
-                      className="opacity-0 group-hover:opacity-100 bg-rurikon-600 text-white p-3 rounded-full hover:bg-rurikon-700 transition-all transform scale-90 group-hover:scale-100"
-                      title="Add to homepage"
-                    >
-                      <Plus className="w-5 h-5" />
-                    </button>
-                  </div>
-
-                  <div className="p-2 bg-white">
-                    <p className="text-xs text-rurikon-600 truncate font-medium">
-                      {photo.alt || 'Untitled'}
-                    </p>
-                    <p className="text-xs text-rurikon-400 lowercase">{photo.category || 'uncategorized'}</p>
-                  </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    });
+                  })()}
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+            )}
+          </div>
+          <p className="text-center text-xs text-gray-400 mt-2">
+            Tip: Drag and drop images to reorder the layout.
+          </p>
         </div>
+
+        {/* Right: Library Sidebar (Sticky) */}
+        <div className="lg:col-span-4 lg:sticky lg:top-4 h-fit">
+          <div className="bg-white rounded-xl border border-rurikon-100 shadow-sm overflow-hidden flex flex-col max-h-[calc(100vh-2rem)]">
+            <div className="p-4 border-b border-rurikon-100 bg-gray-50/50">
+              <h2 className="font-semibold text-gray-800 flex items-center gap-2">
+                <ImageIcon className="w-5 h-5 text-rurikon-600" />
+                Asset Library
+              </h2>
+              <p className="text-xs text-gray-500 mt-1">
+                {unselectedPhotos.length} photos available to add
+              </p>
+            </div>
+
+            <div className="p-4 overflow-y-auto custom-scrollbar">
+              {unselectedPhotos.length === 0 ? (
+                <div className="text-center py-10">
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-50 text-green-600 mb-3">
+                    <Check className="w-6 h-6" />
+                  </div>
+                  <p className="text-sm font-medium text-gray-900">All photos selected</p>
+                  <p className="text-xs text-gray-500 mt-1">Great job! Your gallery is full.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  {unselectedPhotos.map((photo) => (
+                    <div
+                      key={photo.id}
+                      className="group relative rounded-lg overflow-hidden border border-gray-200 bg-gray-100 hover:border-rurikon-400 hover:shadow-md transition-all"
+                    >
+                      <div className="aspect-square relative">
+                        <Image
+                          src={photo.url}
+                          alt={photo.alt || ''}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 768px) 33vw, 20vw"
+                        />
+                        
+                        {/* Hover Overlay */}
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center cursor-pointer"
+                             onClick={() => handleAddPhoto(photo)}>
+                          <div className="opacity-0 group-hover:opacity-100 transform scale-75 group-hover:scale-100 transition-all duration-300 bg-white/20 backdrop-blur-sm p-2 rounded-full border border-white/50 text-white">
+                            <Plus className="w-6 h-6" />
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Caption */}
+                      <div className="p-2 bg-white">
+                        <p className="text-xs font-medium text-gray-700 truncate">
+                          {photo.alt || photo.file_name}
+                        </p>
+                        <p className="text-[10px] text-gray-400 truncate mt-0.5">
+                          {photo.category || 'Uncategorized'}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );

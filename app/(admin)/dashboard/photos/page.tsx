@@ -3,6 +3,17 @@
 import { useAuth } from '@/lib/firebase/useAuth';
 import { useState } from 'react';
 import useSWR, { mutate } from 'swr';
+import { 
+  Folder, 
+  Image as ImageIcon, 
+  Edit2, 
+  Trash2, 
+  Save, 
+  GripVertical, 
+  Loader2,
+  FolderOpen
+} from 'lucide-react';
+import Image from 'next/image';
 
 interface Photo {
   id: string;
@@ -43,7 +54,7 @@ export default function PhotosManagement() {
     {
       revalidateOnFocus: true,
       revalidateOnReconnect: true,
-      refreshInterval: 30000, // 每 30 秒自動刷新
+      refreshInterval: 30000,
     }
   );
 
@@ -51,6 +62,8 @@ export default function PhotosManagement() {
   const [selectedSlug, setSelectedSlug] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [draggedPhoto, setDraggedPhoto] = useState<string | null>(null);
+  
+  // Edit states
   const [editingPhotoId, setEditingPhotoId] = useState<string | null>(null);
   const [editingAlt, setEditingAlt] = useState<string>('');
   const [editingUrl, setEditingUrl] = useState<string>('');
@@ -58,6 +71,7 @@ export default function PhotosManagement() {
   const [editingSlug, setEditingSlug] = useState<string | null>(null);
   const [newSlugName, setNewSlugName] = useState<string>('');
 
+  // --- Handlers (保持不變) ---
   const handleDeletePhoto = async (slug: string, photoId: string) => {
     if (!confirm('Are you sure you want to delete this photo?')) return;
     if (!user) return;
@@ -158,7 +172,7 @@ export default function PhotosManagement() {
 
   const handleRenameSlug = async (oldSlug: string, newSlug: string) => {
     if (!newSlug.trim() || oldSlug === newSlug) {
-      alert('Please enter a valid new slug');
+      setEditingSlug(null);
       return;
     }
 
@@ -202,169 +216,230 @@ export default function PhotosManagement() {
 
   const currentGallery = galleries.find(g => g.slug === selectedSlug);
 
+  // --- UI Renders ---
+
   if (!user) {
     return (
-      <div className="mt-7 text-rurikon-600">Please sign in to manage photos.</div>
+      <div className="flex flex-col items-center justify-center h-[50vh] text-rurikon-600">
+        <p>Please sign in to manage photos.</p>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <div className="mt-7 text-rurikon-600">Failed to load galleries. Please try again.</div>
+      <div className="flex flex-col items-center justify-center h-[50vh] text-red-600 bg-red-50 rounded-lg p-6">
+        <p>Failed to load galleries. Please try again.</p>
+      </div>
     );
   }
 
   return (
-    <div>
-      <div>
-        <h1 className="font-semibold mb-7 text-rurikon-600">Photo Management</h1>
+    <div className="min-h-screen">
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-2xl font-bold text-rurikon-800 tracking-tight">Photo Management</h1>
+      </div>
 
-        {isLoading && (
-          <div className="mt-7 bg-white rounded-lg border border-rurikon-100 p-6 text-center">
-            <p className="text-rurikon-600">Loading galleries...</p>
+      <div className="flex flex-col lg:flex-row gap-6 items-start h-[calc(100vh-150px)]">
+        
+        {/* Left Sidebar: Gallery List */}
+        <div className="w-full lg:w-72 shrink-0 bg-white rounded-xl border border-rurikon-100 shadow-sm overflow-hidden flex flex-col h-full">
+          <div className="p-4 border-b border-rurikon-50 bg-gray-50/50">
+            <h2 className="font-semibold text-gray-700 flex items-center gap-2">
+              <Folder className="w-4 h-4" />
+              Collections ({galleries.length})
+            </h2>
           </div>
-        )}
-
-        {/* Gallery List */}
-        <div className="mt-7 bg-white rounded-lg border border-rurikon-100 p-6">
-          <h2 className="font-semibold mb-7 text-rurikon-600">Gallery List</h2>
           
-          <div className="space-y-2 mb-6">
+          <div className="flex-1 overflow-y-auto p-3 space-y-1 custom-scrollbar">
+            {isLoading && (
+              <div className="flex items-center justify-center py-8 text-gray-400">
+                <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                Loading...
+              </div>
+            )}
+            
             {galleries.map(gallery => (
-              <div key={gallery.slug}>
+              <div key={gallery.slug} className="group relative">
                 {editingSlug === gallery.slug ? (
-                  <div className="flex gap-2 p-2 bg-rurikon-50 rounded-md border-2 border-rurikon-300">
+                  <div className="p-2 bg-white border-2 border-rurikon-400 rounded-lg shadow-sm animate-in fade-in zoom-in-95 duration-200">
                     <input
                       type="text"
                       value={newSlugName}
                       onChange={(e) => setNewSlugName(e.target.value)}
-                      placeholder="Enter new slug name"
-                      className="flex-1 px-3 py-2 border border-rurikon-200 rounded-md focus:ring-2 focus:ring-rurikon-400 focus:border-rurikon-400 text-rurikon-600 lowercase"
+                      placeholder="Name"
+                      className="w-full text-sm px-2 py-1.5 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-rurikon-200 mb-2 lowercase"
                       autoFocus
-                    />
-                    <button
-                      onClick={() => handleRenameSlug(gallery.slug, newSlugName)}
-                      disabled={loading}
-                      className="bg-rurikon-600 text-white px-4 py-2 rounded-md hover:bg-rurikon-700 disabled:bg-rurikon-200 disabled:cursor-not-allowed lowercase"
-                    >
-                      Save
-                    </button>
-                    <button
-                      onClick={() => {
-                        setEditingSlug(null);
-                        setNewSlugName('');
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleRenameSlug(gallery.slug, newSlugName);
+                        if (e.key === 'Escape') setEditingSlug(null);
                       }}
-                      className="bg-rurikon-100 text-rurikon-600 px-4 py-2 rounded-md hover:bg-rurikon-200 lowercase"
-                    >
-                      Cancel
-                    </button>
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleRenameSlug(gallery.slug, newSlugName)}
+                        disabled={loading}
+                        className="flex-1 bg-rurikon-600 text-white text-xs py-1 rounded hover:bg-rurikon-700 disabled:opacity-50"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={() => setEditingSlug(null)}
+                        className="flex-1 bg-gray-100 text-gray-600 text-xs py-1 rounded hover:bg-gray-200"
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2">
+                  <div 
+                    onClick={() => setSelectedSlug(gallery.slug)}
+                    className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all ${
+                      selectedSlug === gallery.slug
+                        ? 'bg-rurikon-50 text-rurikon-700 ring-1 ring-rurikon-200 shadow-sm'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      {selectedSlug === gallery.slug ? (
+                        <FolderOpen className="w-4 h-4 shrink-0 text-rurikon-500" />
+                      ) : (
+                        <Folder className="w-4 h-4 shrink-0 text-gray-400 group-hover:text-gray-500" />
+                      )}
+                      <div className="min-w-0">
+                         <p className="font-medium text-sm truncate">{gallery.slug}</p>
+                         <p className="text-xs text-gray-400">{gallery.images.length} photos</p>
+                      </div>
+                    </div>
+                    
                     <button
-                      onClick={() => setSelectedSlug(gallery.slug)}
-                      className={`flex-1 text-left px-4 py-3 rounded-md transition-colors lowercase ${
-                        selectedSlug === gallery.slug
-                          ? 'bg-rurikon-50 text-rurikon-600 border-2 border-rurikon-300'
-                          : 'bg-white text-rurikon-600 hover:bg-rurikon-50 border-2 border-rurikon-100'
-                      }`}
-                    >
-                      <span className="font-semibold">{gallery.slug}</span>
-                      <span className="ml-2 text-sm text-rurikon-400">
-                        ({gallery.images.length} photos)
-                      </span>
-                    </button>
-                    <button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setEditingSlug(gallery.slug);
                         setNewSlugName(gallery.slug);
                       }}
-                      className="px-3 py-2 text-sm text-rurikon-600 hover:text-rurikon-700 hover:bg-rurikon-50 rounded-md lowercase"
-                      title="Rename slug"
+                      className={`p-1.5 rounded-md hover:bg-white hover:shadow-sm transition-all ${
+                         selectedSlug === gallery.slug ? 'text-rurikon-400 hover:text-rurikon-600' : 'text-gray-300 hover:text-gray-600 opacity-0 group-hover:opacity-100'
+                      }`}
+                      title="Rename collection"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
-                        <path fillRule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" />
-                      </svg>
+                      <Edit2 className="w-3 h-3" />
                     </button>
                   </div>
                 )}
               </div>
             ))}
           </div>
+        </div>
 
-          {/* Photos Display */}
-          {currentGallery && (
-            <div>
-              <h3 className="font-semibold mb-7 text-rurikon-600 lowercase">
-                {currentGallery.slug}'s Photos
-                <span className="text-sm text-rurikon-400 ml-2">
-                  (Drag photos to reorder)
-                </span>
-              </h3>
-              
-              {currentGallery.images.length === 0 ? (
-                <p className="text-rurikon-400 text-center py-8">No photos in this gallery yet</p>
-              ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {currentGallery.images.map((photo, index) => (
+        {/* Right Content: Photos Grid */}
+        <div className="flex-1 bg-white rounded-xl border border-rurikon-100 shadow-sm h-full flex flex-col overflow-hidden">
+          {currentGallery ? (
+            <>
+              {/* Header */}
+              <div className="p-4 sm:p-6 border-b border-rurikon-50 bg-gray-50/30 flex items-center justify-between shrink-0">
+                 <div>
+                    <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                      <span className="text-rurikon-600 uppercase tracking-wide text-sm font-bold bg-rurikon-50 px-2 py-0.5 rounded">Gallery</span>
+                      {currentGallery.slug}
+                    </h2>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Drag and drop to reorder • {currentGallery.images.length} photos
+                    </p>
+                 </div>
+                 {/* Can add gallery-level actions here in future */}
+              </div>
+
+              {/* Grid Area */}
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar bg-slate-50/50">
+                {currentGallery.images.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-gray-400">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                      <ImageIcon className="w-8 h-8 opacity-50" />
+                    </div>
+                    <p>No photos in this gallery yet.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+                    {currentGallery.images.map((photo, index) => (
                       <div
                         key={photo.id}
                         draggable
                         onDragStart={() => handleDragStart(photo.id)}
                         onDragOver={handleDragOver}
                         onDrop={(e) => handleDrop(e, photo.id, currentGallery.slug)}
-                        className="relative group cursor-move bg-white rounded-lg overflow-hidden border border-rurikon-100 hover:border-rurikon-300 transition-all"
+                        className={`group relative bg-white rounded-xl overflow-hidden border transition-all duration-200 hover:shadow-md ${
+                          draggedPhoto === photo.id 
+                            ? 'opacity-40 border-dashed border-rurikon-400 scale-95' 
+                            : 'border-rurikon-100 hover:border-rurikon-300'
+                        }`}
                       >
-                        <div className="aspect-square relative">
-                          <img
+                        {/* Image Container */}
+                        <div className="aspect-square relative bg-gray-100 group cursor-grab active:cursor-grabbing">
+                           {/* Drag Handle Overlay */}
+                           <div className="absolute inset-0 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-linear-to-t from-black/40 via-transparent to-black/20 pointer-events-none" />
+                           
+                           {/* Order Badge */}
+                           <div className="absolute top-2 left-2 z-20 bg-black/50 backdrop-blur-sm text-white text-[10px] px-1.5 py-0.5 rounded font-mono shadow-sm">
+                              #{index + 1}
+                           </div>
+
+                           {/* Grip Icon */}
+                           <div className="absolute top-2 right-2 z-20 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md">
+                              <GripVertical className="w-4 h-4" />
+                           </div>
+
+                           <Image
                             src={photo.url}
                             alt={photo.alt || `Photo ${index + 1}`}
-                            className="w-full h-full object-cover"
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                            unoptimized
                           />
-                          <div className="absolute top-2 left-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
-                            #{index + 1}
-                          </div>
-                          <button
-                            onClick={() => handleDeletePhoto(currentGallery.slug, photo.id)}
-                            className="absolute top-2 right-2 bg-rurikon-600 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-rurikon-700"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                            </svg>
-                          </button>
                         </div>
-                        <div className="p-2 bg-white">
+
+                        {/* Content / Edit Form */}
+                        <div className="p-3">
                           {editingPhotoId === photo.id ? (
-                            <div className="space-y-2">
-                              <input
-                                type="url"
-                                value={editingUrl}
-                                onChange={(e) => setEditingUrl(e.target.value)}
-                                placeholder="Photo URL"
-                                className="w-full text-xs px-2 py-1 border border-rurikon-200 rounded focus:ring-1 focus:ring-rurikon-400 text-rurikon-600"
-                              />
-                              <input
-                                type="text"
-                                value={editingAlt}
-                                onChange={(e) => setEditingAlt(e.target.value)}
-                                placeholder="Alt text"
-                                className="w-full text-xs px-2 py-1 border border-rurikon-200 rounded focus:ring-1 focus:ring-rurikon-400 text-rurikon-600"
-                              />
-                              <select
-                                value={editingVariant}
-                                onChange={(e) => setEditingVariant(e.target.value as 'original' | 'square')}
-                                className="w-full text-xs px-2 py-1 border border-rurikon-200 rounded focus:ring-1 focus:ring-rurikon-400 text-rurikon-600"
-                              >
-                                <option value="original">Original</option>
-                                <option value="square">Square</option>
-                              </select>
-                              <div className="flex gap-1">
+                            <div className="space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                              <div className="space-y-1.5">
+                                <label className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Image URL</label>
+                                <input
+                                  type="url"
+                                  value={editingUrl}
+                                  onChange={(e) => setEditingUrl(e.target.value)}
+                                  className="w-full text-xs px-2 py-1.5 border border-gray-200 rounded focus:ring-1 focus:ring-rurikon-400 outline-none text-gray-700 bg-gray-50"
+                                  placeholder="https://..."
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <label className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Alt Text</label>
+                                <input
+                                  type="text"
+                                  value={editingAlt}
+                                  onChange={(e) => setEditingAlt(e.target.value)}
+                                  className="w-full text-xs px-2 py-1.5 border border-gray-200 rounded focus:ring-1 focus:ring-rurikon-400 outline-none text-gray-700 bg-gray-50"
+                                  placeholder="Description"
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <label className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Display Variant</label>
+                                <select
+                                  value={editingVariant}
+                                  onChange={(e) => setEditingVariant(e.target.value as 'original' | 'square')}
+                                  className="w-full text-xs px-2 py-1.5 border border-gray-200 rounded focus:ring-1 focus:ring-rurikon-400 outline-none text-gray-700 bg-gray-50"
+                                >
+                                  <option value="original">Original</option>
+                                  <option value="square">Square</option>
+                                </select>
+                              </div>
+                              <div className="flex gap-2 pt-1">
                                 <button
                                   onClick={() => handleUpdatePhoto(currentGallery.slug, photo.id, editingUrl, editingAlt, editingVariant)}
-                                  className="flex-1 bg-rurikon-600 text-white text-xs px-2 py-1 rounded hover:bg-rurikon-700 lowercase"
+                                  className="flex-1 bg-rurikon-600 text-white text-xs py-1.5 rounded hover:bg-rurikon-700 transition-colors flex items-center justify-center gap-1"
                                 >
-                                  Save
+                                  <Save className="w-3 h-3" /> Save
                                 </button>
                                 <button
                                   onClick={() => {
@@ -373,24 +448,24 @@ export default function PhotosManagement() {
                                     setEditingUrl('');
                                     setEditingVariant('original');
                                   }}
-                                  className="flex-1 bg-rurikon-100 text-rurikon-600 text-xs px-2 py-1 rounded hover:bg-rurikon-200 lowercase"
+                                  className="flex-1 bg-gray-100 text-gray-600 text-xs py-1.5 rounded hover:bg-gray-200 transition-colors"
                                 >
                                   Cancel
                                 </button>
                               </div>
                             </div>
                           ) : (
-                            <div>
-                              <p className="text-xs text-rurikon-400 truncate mb-1">{photo.url}</p>
-                              <div className="flex items-center justify-between mb-1">
-                                <p className="text-xs text-rurikon-600 truncate flex-1">
-                                  {photo.alt ? `${photo.alt}` : 'No alt text'}
+                            <div className="space-y-2">
+                              <div className="flex items-start justify-between gap-2">
+                                <p className="text-xs font-medium text-gray-700 truncate flex-1" title={photo.alt}>
+                                  {photo.alt || <span className="text-gray-400 italic">No alt text</span>}
                                 </p>
+                                <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded border border-gray-200 whitespace-nowrap">
+                                  {photo.variant || 'original'}
+                                </span>
                               </div>
-                              <div className="flex items-center justify-between">
-                                <p className="text-xs text-rurikon-600 lowercase">
-                                  Variant: {photo.variant || 'original'}
-                                </p>
+                              
+                              <div className="flex items-center justify-between pt-2 border-t border-gray-50">
                                 <button
                                   onClick={() => {
                                     setEditingPhotoId(photo.id);
@@ -398,9 +473,17 @@ export default function PhotosManagement() {
                                     setEditingUrl(photo.url);
                                     setEditingVariant(photo.variant || 'original');
                                   }}
-                                  className="text-rurikon-600 hover:text-rurikon-700 text-xs ml-2 lowercase"
+                                  className="text-xs text-rurikon-600 hover:text-rurikon-800 hover:underline flex items-center gap-1"
                                 >
-                                  Edit
+                                  <Edit2 className="w-3 h-3" /> Edit Info
+                                </button>
+                                
+                                <button
+                                  onClick={() => handleDeletePhoto(currentGallery.slug, photo.id)}
+                                  className="text-gray-400 hover:text-red-600 transition-colors p-1 rounded-md hover:bg-red-50"
+                                  title="Delete photo"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
                                 </button>
                               </div>
                             </div>
@@ -408,8 +491,14 @@ export default function PhotosManagement() {
                         </div>
                       </div>
                     ))}
-                </div>
-              )}
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="h-full flex flex-col items-center justify-center text-gray-400 bg-gray-50/30">
+              <FolderOpen className="w-12 h-12 mb-3 opacity-20" />
+              <p>Select a collection from the left to view photos.</p>
             </div>
           )}
         </div>

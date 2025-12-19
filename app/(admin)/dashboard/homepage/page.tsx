@@ -6,7 +6,6 @@ import { ImageIcon, Plus, X, LayoutGrid, GripVertical, Check, Loader2, ImagePlus
 import Image from 'next/image';
 import { useAuth } from '@/lib/firebase/useAuth';
 
-// --- Interfaces (保持不變) ---
 interface Photo {
   id: string;
   url: string;

@@ -33,7 +33,7 @@ async function getPhotos(slug: string): Promise<PhotoData[]> {
     // 將 telegram-categories 格式轉換為 PhotoData 格式
     return images.map((img: any, index: number) => ({
       id: img.id,
-      url: img.url,
+      url: `/api/homepage/image/${img.id}`,
       alt: img.alt || '',
       variant: img.variant || 'original',
       order: index, // 使用陣列順序作為 order

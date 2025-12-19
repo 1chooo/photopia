@@ -203,7 +203,7 @@ export default function DashboardPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <a
-                href="/dashboard/telegram"
+                href="/dashboard/upload"
                 className="group relative flex flex-col p-5 bg-white border border-gray-200 rounded-xl hover:border-rurikon-300 hover:shadow-md transition-all duration-200"
               >
                 <div className="absolute top-4 right-4 text-gray-300 group-hover:text-rurikon-400 transition-colors">

@@ -4,14 +4,17 @@ import { getAdminDb } from '@/lib/firebase/admin';
 export async function GET() {
   try {
     const db = getAdminDb();
-    const docRef = db.collection('settings').doc('homepage-photos');
-    const doc = await docRef.get();
+    const snapshot = await db
+      .collection('home-pin')
+      .orderBy('order', 'asc')
+      .get();
 
-    if (!doc.exists) {
-      return NextResponse.json({ selectedPhotos: [] }, { status: 200 });
-    }
+    const selectedPhotos = snapshot.docs.map(doc => ({
+      photoId: doc.id,
+      order: doc.data().order,
+    }));
 
-    return NextResponse.json(doc.data(), { status: 200 });
+    return NextResponse.json({ selectedPhotos }, { status: 200 });
   } catch (error) {
     console.error('Error fetching homepage photos:', error);
     return NextResponse.json(
@@ -34,11 +37,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const docRef = db.collection('settings').doc('homepage-photos');
-    await docRef.set({
-      selectedPhotos,
-      updatedAt: new Date().toISOString(),
+    // 使用 batch 來確保原子性操作
+    const batch = db.batch();
+
+    // 1. 刪除現有的所有 documents
+    const existingSnapshot = await db.collection('home-pin').get();
+    existingSnapshot.docs.forEach(doc => {
+      batch.delete(doc.ref);
     });
+
+    // 2. 新增新的 documents
+    selectedPhotos.forEach(photo => {
+      const docRef = db.collection('home-pin').doc(photo.photoId);
+      batch.set(docRef, {
+        order: photo.order,
+        updatedAt: new Date().toISOString(),
+      });
+    });
+
+    // 執行 batch
+    await batch.commit();
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {

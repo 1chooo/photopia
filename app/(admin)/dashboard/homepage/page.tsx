@@ -1,28 +1,27 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import useSWR, { mutate } from 'swr';
 import { ImageIcon, Plus, X } from 'lucide-react';
 import Image from 'next/image';
+import { useAuth } from '@/lib/firebase/useAuth';
 
 interface Photo {
   id: string;
   url: string;
+  file_id: string;
+  file_name: string;
+  file_size: number;
+  file_type?: string;
+  category?: string;
   alt?: string;
-  variant?: 'original' | 'square';
-  order: number;
-  slug: string;
-  createdAt: string;
-}
-
-interface Gallery {
-  slug: string;
-  photos: Photo[];
+  uploaded_by?: string;
+  uploaded_at: string;
+  updated_at?: string;
 }
 
 interface SelectedPhoto {
   photoId: string;
-  slug: string;
   order: number;
 }
 
@@ -67,18 +66,36 @@ const getGalleryLayout = (columns: 1 | 2 | 3 | 4) => {
   }
 };
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const fetcher = async (url: string, token: string | null) => {
+  if (!token) return null;
+  const response = await fetch(url, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  if (!response.ok) throw new Error('Failed to fetch');
+  return response.json();
+};
 
 export default function HomepagePhotosManagement() {
-  const { data: galleriesData } = useSWR<{ galleries: Gallery[] }>(
-    '/api/photos',
-    fetcher,
+  const { user, loading: authLoading } = useAuth();
+  const [idToken, setIdToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      user.getIdToken().then(setIdToken);
+    }
+  }, [user]);
+
+  const { data: imagesData } = useSWR(
+    idToken ? ['/api/telegram/images', idToken] : null,
+    ([url, token]) => fetcher(url, token),
     { revalidateOnFocus: true }
   );
 
   const { data: homepageData } = useSWR<{ selectedPhotos: SelectedPhoto[] }>(
     '/api/homepage',
-    fetcher,
+    (url) => fetch(url).then((res) => res.json()),
     { revalidateOnFocus: true }
   );
 
@@ -86,18 +103,13 @@ export default function HomepagePhotosManagement() {
   const [saving, setSaving] = useState(false);
   const [previewColumns, setPreviewColumns] = useState<1 | 2 | 3 | 4>(4);
 
-  const galleries = galleriesData?.galleries || [];
+  const allPhotos = (imagesData?.images || []) as Photo[];
   const selectedPhotos = homepageData?.selectedPhotos || [];
-
-  // Get all photos with their slug info
-  const allPhotos = galleries.flatMap(gallery =>
-    gallery.photos.map(photo => ({ ...photo, slug: gallery.slug }))
-  );
 
   // Get selected photo objects
   const selectedPhotoObjects = selectedPhotos
     .map(sp => {
-      const photo = allPhotos.find(p => p.id === sp.photoId && p.slug === sp.slug);
+      const photo = allPhotos.find(p => p.id === sp.photoId);
       return photo ? { ...photo, selectedOrder: sp.order } : null;
     })
     .filter(Boolean)
@@ -105,15 +117,22 @@ export default function HomepagePhotosManagement() {
 
   // Get unselected photos
   const unselectedPhotos = allPhotos.filter(
-    photo => !selectedPhotos.some(sp => sp.photoId === photo.id && sp.slug === photo.slug)
+    photo => !selectedPhotos.some(sp => sp.photoId === photo.id)
   );
+
+  if (authLoading || !user || !idToken) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <p className="text-rurikon-400">Loading...</p>
+      </div>
+    );
+  }
 
   const handleAddPhoto = async (photo: Photo) => {
     const newSelected = [
       ...selectedPhotos,
       {
         photoId: photo.id,
-        slug: photo.slug,
         order: selectedPhotos.length,
       },
     ];
@@ -139,9 +158,9 @@ export default function HomepagePhotosManagement() {
     }
   };
 
-  const handleRemovePhoto = async (photoId: string, slug: string) => {
+  const handleRemovePhoto = async (photoId: string) => {
     const newSelected = selectedPhotos
-      .filter(sp => !(sp.photoId === photoId && sp.slug === slug))
+      .filter(sp => sp.photoId !== photoId)
       .map((sp, index) => ({ ...sp, order: index }));
 
     setSaving(true);
@@ -293,7 +312,7 @@ export default function HomepagePhotosManagement() {
 
                           return (
                             <div
-                              key={`${item.photo!.slug}-${item.photo!.id}`}
+                              key={item.photo!.id}
                               className={`${widthClass} p-1`}
                             >
                               <div
@@ -305,18 +324,16 @@ export default function HomepagePhotosManagement() {
                               >
                                 <div className="aspect-[3/2] relative overflow-hidden rounded-md">
                                   <Image
-                                    src={`/api/photos/image/${item.photo!.slug}/${item.photo!.order}`}
+                                    src={item.photo!.url}
                                     alt={item.photo!.alt || ''}
                                     fill
                                     className="object-cover object-center"
                                     sizes="(max-width: 768px) 100vw, 50vw"
-                                    onError={(e) => {
-                                      e.currentTarget.src = item.photo!.url;
-                                    }}
+                                    unoptimized
                                   />
                                   <div className="absolute inset-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center">
                                     <button
-                                      onClick={() => handleRemovePhoto(item.photo!.id, item.photo!.slug)}
+                                      onClick={() => handleRemovePhoto(item.photo!.id)}
                                       className="opacity-0 group-hover:opacity-100 bg-rurikon-600 text-white p-2 rounded-full hover:bg-red-600 transition-all"
                                       title="Remove from homepage"
                                     >
@@ -359,17 +376,14 @@ export default function HomepagePhotosManagement() {
             <div className="grid grid-cols-2 gap-3 max-h-150 overflow-y-auto pr-2">
               {unselectedPhotos.map((photo) => (
                 <div
-                  key={`${photo.slug}-${photo.id}`}
+                  key={photo.id}
                   className="relative group rounded-lg overflow-hidden bg-rurikon-50 border border-rurikon-200 hover:border-rurikon-400 transition-all"
                 >
                   <div className="aspect-square bg-rurikon-100">
                     <img
-                      src={`/api/photos/image/${photo.slug}/${photo.order}`}
+                      src={photo.url}
                       alt={photo.alt || ''}
                       className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.src = photo.url;
-                      }}
                     />
                   </div>
 
@@ -387,7 +401,7 @@ export default function HomepagePhotosManagement() {
                     <p className="text-xs text-rurikon-600 truncate font-medium">
                       {photo.alt || 'Untitled'}
                     </p>
-                    <p className="text-xs text-rurikon-400 lowercase">{photo.slug}</p>
+                    <p className="text-xs text-rurikon-400 lowercase">{photo.category || 'uncategorized'}</p>
                   </div>
                 </div>
               ))}

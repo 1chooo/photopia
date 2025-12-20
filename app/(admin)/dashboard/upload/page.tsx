@@ -369,7 +369,7 @@ export default function TelegramUploadPage() {
                   
                   <div className="flex items-center justify-between text-sm text-rurikon-600">
                     <p>
-                      Chosen {selectedFiles.length} image{selectedFiles.length > 1 ? 's' : ''}
+                      {selectedFiles.length} image{selectedFiles.length > 1 ? 's' : ''} chosen 
                     </p>
                     <button
                       onClick={() => handleRemovePreview()}

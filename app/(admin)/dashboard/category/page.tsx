@@ -235,10 +235,10 @@ export default function CategoryManagementPage() {
       setBatchSlugInput('');
       setBatchSelectedSlug('');
       setBatchVariantInput('original');
-      alert(`成功批量更新 ${selectedImages.size} 張圖片`);
+      alert(`Successfully updated ${selectedImages.size} images in batch`);
     } catch (error) {
       console.error('Error batch updating slug:', error);
-      alert('批量更新分類失敗');
+      alert('Failed to update categories in batch');
     } finally {
       setSaving(false);
     }

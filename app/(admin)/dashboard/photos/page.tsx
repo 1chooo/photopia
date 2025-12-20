@@ -473,7 +473,7 @@ export default function PhotosManagement() {
                                     setEditingUrl(photo.url);
                                     setEditingVariant(photo.variant || 'original');
                                   }}
-                                  className="text-xs text-rurikon-600 hover:text-rurikon-800 hover:underline flex items-center gap-1"
+                                  className="text-xs text-rurikon-600 hover:text-rurikon-800 hover:underline flex items-center gap-1 cursor-pointer"
                                 >
                                   <Edit2 className="w-3 h-3" /> Edit Info
                                 </button>

@@ -1,6 +1,6 @@
 'use client';
 
-import { GalleryImage, GalleryLayout } from '@/types/gallery';
+import { GalleryImage } from '@/types/gallery';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 
@@ -18,155 +18,54 @@ interface Photo {
   order: number;
 }
 
-interface HomepageImagesProps {
-  layout?: GalleryLayout;
-  columns?: 1 | 2 | 3 | 4;
-}
+interface HomepageImagesProps {}
 
 interface HomepageImageItemProps {
   image: GalleryImage;
 }
 
-// --- Skeleton Component ---
-// 模擬圖片載入時的佔位符
 function GallerySkeleton() {
-  // 模擬一個典型的佈局單元 (左側半寬x4+全寬, 右側全寬+半寬x4)
-  // 這與 getLayout(4) 的邏輯相對應
   return (
     <section id="homepage-images-skeleton" className="animate-pulse">
       <div className="container w-full mx-auto px-4">
-        <div className="flex flex-wrap w-full">
-          {/* Column 1 Simulation */}
-          <div className="flex w-full md:w-1/2 flex-wrap">
-             {/* Half */}
-             <div className="w-1/2 p-1"><div className="w-full aspect-square bg-gray-100 rounded-sm"></div></div>
-             <div className="w-1/2 p-1"><div className="w-full aspect-square bg-gray-100 rounded-sm"></div></div>
-             {/* Half */}
-             <div className="w-1/2 p-1"><div className="w-full aspect-square bg-gray-100 rounded-sm"></div></div>
-             <div className="w-1/2 p-1"><div className="w-full aspect-square bg-gray-100 rounded-sm"></div></div>
-             {/* Full */}
-             <div className="w-full p-1"><div className="w-full aspect-3/2 bg-gray-100 rounded-sm"></div></div>
-          </div>
-
-          {/* Column 2 Simulation */}
-          <div className="flex w-full md:w-1/2 flex-wrap">
-             {/* Full */}
-             <div className="w-full p-1"><div className="w-full aspect-3/2 bg-gray-100 rounded-sm"></div></div>
-             {/* Half */}
-             <div className="w-1/2 p-1"><div className="w-full aspect-square bg-gray-100 rounded-sm"></div></div>
-             <div className="w-1/2 p-1"><div className="w-full aspect-square bg-gray-100 rounded-sm"></div></div>
-             {/* Half */}
-             <div className="w-1/2 p-1"><div className="w-full aspect-square bg-gray-100 rounded-sm"></div></div>
-             <div className="w-1/2 p-1"><div className="w-full aspect-square bg-gray-100 rounded-sm"></div></div>
-          </div>
-          
-           {/* Column 3 Simulation (Repeat for visual density) */}
-           <div className="flex w-full md:w-1/2 flex-wrap md:flex">
-             <div className="w-1/2 p-1"><div className="w-full aspect-square bg-gray-100 rounded-sm"></div></div>
-             <div className="w-1/2 p-1"><div className="w-full aspect-square bg-gray-100 rounded-sm"></div></div>
-             <div className="w-full p-1"><div className="w-full aspect-3/2 bg-gray-100 rounded-sm"></div></div>
-          </div>
-           <div className="flex w-full md:w-1/2 flex-wrap md:flex">
-             <div className="w-full p-1"><div className="w-full aspect-3/2 bg-gray-100 rounded-sm"></div></div>
-             <div className="w-1/2 p-1"><div className="w-full aspect-square bg-gray-100 rounded-sm"></div></div>
-             <div className="w-1/2 p-1"><div className="w-full aspect-square bg-gray-100 rounded-sm"></div></div>
-          </div>
+        <div className="columns-2 md:columns-3 2xl:columns-4 gap-4 md:gap-6">
+          {Array.from({ length: 10 }).map((_, idx) => (
+            <div
+              key={idx}
+              className="mb-4 break-inside-avoid rounded-sm bg-gray-100 aspect-3/2"
+            />
+          ))}
         </div>
       </div>
     </section>
   );
 }
 
-function HomepageImageItem({ image, isPriority = false }: HomepageImageItemProps & { isPriority?: boolean }) {
-  const [aspectRatio, setAspectRatio] = useState<string>('aspect-square');
+function MasonryItem({ image, isPriority = false }: HomepageImageItemProps & { isPriority?: boolean }) {
   const [isLoaded, setIsLoaded] = useState(false);
-
-  // If width and height are provided, calculate aspect ratio
-  if (image.width && image.height && !isLoaded) {
-    const isPortrait = image.height > image.width;
-    const ratio = isPortrait ? 'aspect-[2/3]' : 'aspect-3/2';
-    if (aspectRatio !== ratio) {
-      setAspectRatio(ratio);
-      setIsLoaded(true);
-    }
-  }
-
-  const handleLoadingComplete = (img: HTMLImageElement) => {
-    // Determine orientation from the loaded image
-    const isPortrait = img.naturalHeight > img.naturalWidth;
-    const ratio = isPortrait ? 'aspect-[2/3]' : 'aspect-3/2';
-    setAspectRatio(ratio);
-    setIsLoaded(true);
-  };
-
-  // Use proxy URL to hide original photo URL
   const proxySrc = image.id ? `/api/homepage/image/${image.id}` : image.src;
-  
+
   return (
-    <div className="overflow-hidden h-full w-full bg-gray-50">
-      <div className={`block h-full w-full relative ${aspectRatio} transition-all duration-300`}>
-        <Image
-          alt={image.alt}
-          className={`object-cover object-center transition duration-700 transform hover:scale-105 ${
-            isLoaded ? 'opacity-100 blur-0' : 'opacity-0 blur-sm'
-          }`}
-          src={proxySrc}
-          fill
-          quality={70}
-          priority={isPriority}
-          loading={isPriority ? undefined : 'lazy'}
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1536px) 33vw, 25vw"
-          onLoad={(e) => handleLoadingComplete(e.currentTarget)}
-        />
-      </div>
+    <div className="mb-4 break-inside-avoid overflow-hidden bg-gray-50">
+      <Image
+        alt={image.alt}
+        src={proxySrc}
+        width={image.width || 800}
+        height={image.height || 600}
+        className={`w-full h-auto object-cover transition duration-700 ${
+          isLoaded ? 'opacity-100 blur-0' : 'opacity-0 blur-sm'
+        }`}
+        sizes="(max-width: 640px) 50vw, (max-width: 1280px) 33vw, (max-width: 1920px) 25vw, 20vw"
+        quality={70}
+        priority={isPriority}
+        loading={isPriority ? undefined : 'lazy'}
+        onLoad={() => setIsLoaded(true)}
+      />
     </div>
   );
 }
 
-// Get gallery layout based on column count
-const getLayout = (columns: 1 | 2 | 3 | 4): GalleryLayout => {
-  switch (columns) {
-    case 1:
-      return {
-        columns: [
-          [{ size: 'full' }],
-          [{ size: 'full' }],
-          [{ size: 'full' }],
-          [{ size: 'full' }],
-        ],
-      };
-    case 2:
-      return {
-        columns: [
-          [{ size: 'full' }],
-          [{ size: 'full' }],
-        ],
-      };
-    case 3:
-      return {
-        columns: [
-          [{ size: 'half' }, { size: 'half' }, { size: 'half' }, { size: 'half' }, { size: 'full' }],
-          [{ size: 'full' }, { size: 'half' }, { size: 'half' }, { size: 'half' }, { size: 'half' }],
-          [{ size: 'half' }, { size: 'half' }, { size: 'half' }, { size: 'half' }, { size: 'full' }],
-          [{ size: 'full' }, { size: 'half' }, { size: 'half' }, { size: 'half' }, { size: 'half' }],
-        ],
-      };
-    case 4:
-    default:
-      return {
-        columns: [
-          [{ size: 'half' }, { size: 'half' }, { size: 'half' }, { size: 'half' }, { size: 'full' }],
-          [{ size: 'full' }, { size: 'half' }, { size: 'half' }, { size: 'half' }, { size: 'half' }],
-          [{ size: 'half' }, { size: 'half' }, { size: 'half' }, { size: 'half' }, { size: 'full' }],
-          [{ size: 'full' }, { size: 'half' }, { size: 'half' }, { size: 'half' }, { size: 'half' }],
-        ],
-      };
-  }
-};
-
 export default function HomepageImages({ 
-  layout, 
-  columns = 4
 }: HomepageImagesProps) {
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -202,8 +101,6 @@ export default function HomepageImages({
     fetchHomepagePhotos();
   }, []);
 
-  const currentLayout = layout || getLayout(columns);
-
   if (loading) {
     return <GallerySkeleton />;
   }
@@ -221,63 +118,13 @@ export default function HomepageImages({
     );
   }
 
-  let imageIndex = 0;
-
-  const totalImagesInPattern = currentLayout.columns.reduce(
-    (sum, column) => sum + column.length,
-    0
-  );
-  const timesToRepeat = Math.ceil(images.length / totalImagesInPattern);
-
-  const extendedColumns = Array.from({ length: timesToRepeat }, (_, repeatIndex) =>
-    currentLayout.columns.map((column, columnIndex) => ({
-      column,
-      key: `${repeatIndex}-${columnIndex}`,
-    }))
-  ).flat();
-
   return (
     <section id="homepage-images">
       <div className="container w-full mx-auto px-4">
-        <div className="flex flex-wrap w-full">
-          {extendedColumns.map(({ column, key }) => {
-            const columnImages: { image: GalleryImage; size: 'full' | 'half' }[] = [];
-            
-            column.forEach((item) => {
-              if (imageIndex < images.length) {
-                columnImages.push({
-                  image: images[imageIndex],
-                  size: item.size,
-                });
-                imageIndex++;
-              }
-            });
-
-            if (columnImages.length === 0) {
-              return null;
-            }
-
-            return (
-              <div
-                key={key}
-                className="flex w-full md:w-1/2 flex-wrap"
-              >
-                {columnImages.map((item, itemIndex) => {
-                  const widthClass =
-                    item.size === 'full' ? 'w-full' : 'w-full md:w-1/2';
-                  
-                  return (
-                    <div key={itemIndex} className={`${widthClass} p-1`}>
-                      <HomepageImageItem 
-                        image={item.image} 
-                        isPriority={imageIndex < 4} // 優化：前幾張圖片優先載入
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })}
+        <div className="columns-2 md:columns-3 2xl:columns-4 gap-4 md:gap-6">
+          {images.map((img, idx) => (
+            <MasonryItem key={img.id ?? idx} image={img} isPriority={idx < 4} />
+          ))}
         </div>
       </div>
     </section>
